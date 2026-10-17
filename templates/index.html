@@ -1,467 +1,168 @@
 {% extends 'base.html' %}
 
-{% block title %}Overview - ResumeAI Enterprise Screening Platform{% endblock %}
-{% block breadcrumb %}Overview Dashboard{% endblock %}
+{% block title %}Home - AI Based Resume Screening System{% endblock %}
 
 {% block content %}
-<!-- 1. Enterprise Welcome Banner -->
-<section class="welcome-banner">
-    <div class="welcome-content">
-        <div class="welcome-badge">
-            <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
-            <span>AI Talent Intelligence & Screening</span>
-        </div>
-        <h1 class="welcome-title">
-            Automate Technical Recruitment with <span>Explainable AI</span>
-        </h1>
-        <p class="welcome-desc">
-            Parse multi-page PDF resumes, extract structured skills and experience metrics, calculate weighted match vectors using TF-IDF cosine similarity, and rank candidates deterministically with Merge Sort.
-        </p>
-        <div class="welcome-actions">
-            <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
-                <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
-                <span>Start New Screening</span>
-            </a>
-            <button type="button" class="btn btn-secondary btn-lg btn-run-demo" style="background: rgba(255,255,255,0.12); color: #ffffff; border-color: rgba(255,255,255,0.25);">
-                <i data-lucide="zap" style="width: 18px; height: 18px; color: #818cf8;"></i>
-                <span>Run Sample Evaluation</span>
-            </button>
-        </div>
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-badge">
+        <i class="fa-solid fa-graduation-cap"></i> AI + Data Structures & Algorithms Mini-Project
     </div>
-</section>
+    <h1 class="hero-title">
+        AI Based <span class="gradient-text">Resume Screening</span> System
+    </h1>
+    <p class="hero-subtitle">
+        Accelerate recruitment workflows with intelligent PDF parsing, NLP keyword matching, multi-factor scoring, and deterministic candidate ranking using custom algorithms.
+    </p>
 
-<!-- 2. Real-Time Performance Analytics KPIs -->
-<section class="metrics-grid">
-    <!-- Metric 1: Total Candidates -->
-    <div class="metric-card">
-        <div class="metric-header">
-            <span class="metric-label">Candidates Evaluated</span>
-            <div class="metric-icon-wrap metric-icon-indigo">
-                <i data-lucide="users" style="width: 18px; height: 18px;"></i>
-            </div>
-        </div>
-        <div class="metric-value-row">
-            <span class="metric-value">{{ analytics.total_candidates }}</span>
-            <span class="metric-unit">resumes</span>
-        </div>
-        <div class="metric-subtext">
-            <i data-lucide="database" style="width: 13px; height: 13px; color: var(--primary);"></i>
-            <span>Across {{ total_screenings }} job screening batch{{ 'es' if total_screenings != 1 else '' }}</span>
-        </div>
-    </div>
-
-    <!-- Metric 2: Average Match Score -->
-    <div class="metric-card">
-        <div class="metric-header">
-            <span class="metric-label">Average Match Score</span>
-            <div class="metric-icon-wrap metric-icon-emerald">
-                <i data-lucide="trending-up" style="width: 18px; height: 18px;"></i>
-            </div>
-        </div>
-        <div class="metric-value-row">
-            <span class="metric-value">{{ analytics.avg_score }}</span>
-            <span class="metric-unit">%</span>
-        </div>
-        <div class="metric-subtext">
-            <i data-lucide="check-check" style="width: 13px; height: 13px; color: var(--emerald);"></i>
-            <span>4-factor weighted scoring baseline</span>
-        </div>
-    </div>
-
-    <!-- Metric 3: Strong Matches -->
-    <div class="metric-card">
-        <div class="metric-header">
-            <span class="metric-label">Strong Matches</span>
-            <div class="metric-icon-wrap metric-icon-cobalt">
-                <i data-lucide="award" style="width: 18px; height: 18px;"></i>
-            </div>
-        </div>
-        <div class="metric-value-row">
-            <span class="metric-value">{{ analytics.strong_matches }}</span>
-            <span class="metric-unit">candidates</span>
-        </div>
-        <div class="metric-subtext">
-            <i data-lucide="sparkle" style="width: 13px; height: 13px; color: var(--cobalt);"></i>
-            <span>Score &ge; 75% alignment threshold</span>
-        </div>
-    </div>
-
-    <!-- Metric 4: Screening Sessions -->
-    <div class="metric-card">
-        <div class="metric-header">
-            <span class="metric-label">Screening Sessions</span>
-            <div class="metric-icon-wrap metric-icon-amber">
-                <i data-lucide="briefcase" style="width: 18px; height: 18px;"></i>
-            </div>
-        </div>
-        <div class="metric-value-row">
-            <span class="metric-value">{{ total_screenings }}</span>
-            <span class="metric-unit">roles</span>
-        </div>
-        <div class="metric-subtext">
-            <i data-lucide="clock" style="width: 13px; height: 13px; color: var(--amber);"></i>
-            <span>Persisted in SQLite database</span>
-        </div>
-    </div>
-</section>
-
-<!-- 3. Dashboard Main Grid (2-Column Architecture) -->
-<section class="dashboard-grid">
-    <!-- Left Column: Recent Screening Sessions -->
-    <div style="display: flex; flex-direction: column; gap: 24px;">
-        <div class="card">
-            <div class="card-header">
-                <div>
-                    <h3 class="card-title">
-                        <i data-lucide="folder-git-2" style="width: 18px; height: 18px; color: var(--primary);"></i>
-                        <span>Recent Screening Sessions</span>
-                    </h3>
-                    <p class="card-subtitle">Active and completed candidate evaluation batches</p>
-                </div>
-                {% if recent_jobs %}
-                    <a href="{{ url_for('history') }}" class="btn btn-ghost btn-sm">
-                        <span>View All ({{ total_screenings }})</span>
-                        <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
-                    </a>
-                {% endif %}
-            </div>
-
-            <div class="card-body" style="padding: 0;">
-                {% if recent_jobs %}
-                    <div class="data-table-wrapper">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Job Title / Role</th>
-                                    <th>Candidates</th>
-                                    <th>Avg Score</th>
-                                    <th>Top Score</th>
-                                    <th style="text-align: right;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for job in recent_jobs %}
-                                    <tr>
-                                        <td>
-                                            <div class="job-cell-title">
-                                                <i data-lucide="briefcase" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
-                                                <a href="{{ url_for('view_results', job_id=job.id) }}" style="font-weight: 600; color: var(--text-primary);">
-                                                    {{ job.job_title }}
-                                                </a>
-                                            </div>
-                                            <div class="job-cell-date">
-                                                ID #{{ job.id }} &bull; {{ job.created_at[:10] if job.created_at else 'Recent' }}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="badge-pill">
-                                                {{ job.candidate_count }} resume{{ 's' if job.candidate_count != 1 else '' }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span style="font-weight: 600; color: {% if job.avg_score >= 70 %}var(--emerald){% elif job.avg_score >= 50 %}var(--amber){% else %}var(--rose){% endif %};">
-                                                {{ job.avg_score }}%
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span style="font-weight: 700; color: var(--emerald);">
-                                                {{ job.top_score }}%
-                                            </span>
-                                        </td>
-                                        <td style="text-align: right;">
-                                            <a href="{{ url_for('view_results', job_id=job.id) }}" class="btn btn-secondary btn-sm">
-                                                <span>Leaderboard</span>
-                                                <i data-lucide="arrow-up-right" style="width: 14px; height: 14px;"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="empty-state" style="border: none; padding: 40px 20px;">
-                        <div class="empty-icon-box">
-                            <i data-lucide="inbox" style="width: 26px; height: 26px;"></i>
-                        </div>
-                        <h4 class="empty-title">No Screening Sessions Yet</h4>
-                        <p class="empty-desc">
-                            Ready to screen candidates? Upload resumes against a Job Description, or run a 1-click sample demo.
-                        </p>
-                        <div style="display: flex; gap: 10px; justify-content: center;">
-                            <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-sm">
-                                <i data-lucide="plus" style="width: 15px; height: 15px;"></i>
-                                <span>Create Screening</span>
-                            </a>
-                            <button type="button" class="btn btn-secondary btn-sm btn-run-demo">
-                                <i data-lucide="zap" style="width: 15px; height: 15px; color: var(--primary);"></i>
-                                <span>1-Click Sample Demo</span>
-                            </button>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Recent Parsed Candidates Spotlight -->
-        {% if analytics.recent_candidates %}
-            <div class="card">
-                <div class="card-header">
-                    <div>
-                        <h3 class="card-title">
-                            <i data-lucide="sparkles" style="width: 18px; height: 18px; color: var(--primary);"></i>
-                            <span>Recently Evaluated Candidates</span>
-                        </h3>
-                        <p class="card-subtitle">Latest resume extractions and match score evaluations</p>
-                    </div>
-                </div>
-                <div class="card-body" style="padding: 0;">
-                    <div class="data-table-wrapper">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Candidate</th>
-                                    <th>Screened For</th>
-                                    <th>Match Score</th>
-                                    <th>Classification</th>
-                                    <th style="text-align: right;">Details</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for cand in analytics.recent_candidates %}
-                                    <tr>
-                                        <td>
-                                            <div style="font-weight: 600; color: var(--text-primary);">{{ cand.name }}</div>
-                                            <div style="font-size: 0.75rem; color: var(--text-muted);">Candidate #{{ cand.id }}</div>
-                                        </td>
-                                        <td>
-                                            <span style="font-size: 0.85rem; color: var(--text-secondary);">{{ cand.job_title }}</span>
-                                        </td>
-                                        <td>
-                                            <span style="font-weight: 700; font-size: 0.95rem; color: {% if cand.match_score >= 75 %}var(--emerald){% elif cand.match_score >= 50 %}var(--amber){% else %}var(--rose){% endif %};">
-                                                {{ cand.match_score }}%
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="status-chip {% if cand.match_score >= 75 %}status-chip-strong{% elif cand.match_score >= 50 %}status-chip-moderate{% else %}status-chip-low{% endif %}">
-                                                {{ cand.badge or ('Strong Match' if cand.match_score >= 75 else ('Moderate Match' if cand.match_score >= 50 else 'Low Match')) }}
-                                            </span>
-                                        </td>
-                                        <td style="text-align: right;">
-                                            <a href="{{ url_for('candidate_detail', candidate_id=cand.id) }}" class="btn btn-ghost btn-sm">
-                                                <span>Profile</span>
-                                                <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        {% endif %}
-    </div>
-
-    <!-- Right Column: Distribution, Skills & Quick Start -->
-    <div style="display: flex; flex-direction: column; gap: 24px;">
-        <!-- Card 1: Candidate Match Distribution -->
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i data-lucide="pie-chart" style="width: 18px; height: 18px; color: var(--primary);"></i>
-                    <span>Match Distribution</span>
-                </h3>
-            </div>
-            <div class="card-body">
-                {% set total = analytics.total_candidates %}
-                {% set p_strong = ((analytics.strong_matches / total) * 100)|round(0)|int if total > 0 else 0 %}
-                {% set p_mod = ((analytics.moderate_matches / total) * 100)|round(0)|int if total > 0 else 0 %}
-                {% set p_low = ((analytics.low_matches / total) * 100)|round(0)|int if total > 0 else 0 %}
-
-                <div class="dist-item">
-                    <div class="dist-meta">
-                        <span style="color: var(--emerald-text); display: flex; align-items: center; gap: 6px;">
-                            <i data-lucide="check-circle-2" style="width: 14px; height: 14px; color: var(--emerald);"></i>
-                            Strong Fit (&ge; 75%)
-                        </span>
-                        <span><strong>{{ analytics.strong_matches }}</strong> ({{ p_strong }}%)</span>
-                    </div>
-                    <div class="dist-bar-track">
-                        <div class="dist-bar-fill dist-fill-strong" style="width: {{ p_strong }}%;"></div>
-                    </div>
-                </div>
-
-                <div class="dist-item">
-                    <div class="dist-meta">
-                        <span style="color: var(--amber-text); display: flex; align-items: center; gap: 6px;">
-                            <i data-lucide="alert-triangle" style="width: 14px; height: 14px; color: var(--amber);"></i>
-                            Moderate Fit (50&ndash;74%)
-                        </span>
-                        <span><strong>{{ analytics.moderate_matches }}</strong> ({{ p_mod }}%)</span>
-                    </div>
-                    <div class="dist-bar-track">
-                        <div class="dist-bar-fill dist-fill-moderate" style="width: {{ p_mod }}%;"></div>
-                    </div>
-                </div>
-
-                <div class="dist-item">
-                    <div class="dist-meta">
-                        <span style="color: var(--rose-text); display: flex; align-items: center; gap: 6px;">
-                            <i data-lucide="x-circle" style="width: 14px; height: 14px; color: var(--rose);"></i>
-                            Low Alignment (&lt; 50%)
-                        </span>
-                        <span><strong>{{ analytics.low_matches }}</strong> ({{ p_low }}%)</span>
-                    </div>
-                    <div class="dist-bar-track">
-                        <div class="dist-bar-fill dist-fill-low" style="width: {{ p_low }}%;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Card 2: Top Detected Skills Coverage -->
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i data-lucide="tag" style="width: 18px; height: 18px; color: var(--primary);"></i>
-                    <span>Skill Coverage Analytics</span>
-                </h3>
-            </div>
-            <div class="card-body">
-                {% if analytics.top_skills %}
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
-                        Most frequently extracted technical proficiencies across parsed candidate resumes:
-                    </p>
-                    <div class="skill-tags-group">
-                        {% for skill in analytics.top_skills %}
-                            <span class="skill-tag skill-tag-emerald">
-                                <span>{{ skill.name }}</span>
-                                <span class="skill-tag-count">{{ skill.count }}</span>
-                            </span>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p style="font-size: 0.82rem; color: var(--text-muted);">
-                        Skills will automatically appear here once candidate PDF resumes are screened.
-                    </p>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Card 3: Quick Start Guide -->
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i data-lucide="compass" style="width: 18px; height: 18px; color: var(--primary);"></i>
-                    <span>Screening Workflow</span>
-                </h3>
-            </div>
-            <div class="card-body">
-                <div class="workflow-step-list">
-                    <div class="workflow-step-item">
-                        <div class="workflow-step-num">1</div>
-                        <div class="workflow-step-text">
-                            <h5>Define Job Requirements</h5>
-                            <p>Provide Job Title and paste the Job Description. The NLP engine parses required skills and experience.</p>
-                        </div>
-                    </div>
-                    <div class="workflow-step-item">
-                        <div class="workflow-step-num">2</div>
-                        <div class="workflow-step-text">
-                            <h5>Upload PDF Resumes</h5>
-                            <p>Drop multi-candidate PDF resumes. The parser extracts text, entities, skills, and work history.</p>
-                        </div>
-                    </div>
-                    <div class="workflow-step-item">
-                        <div class="workflow-step-num">3</div>
-                        <div class="workflow-step-text">
-                            <h5>Inspect Ranked Leaderboard</h5>
-                            <p>Evaluate candidates ranked by custom Merge Sort with 4-factor scoring explainability breakdown.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- 4. How the ResumeAI Engine Works (Process Pipeline) -->
-<section class="pipeline-section">
-    <div class="pipeline-header">
-        <div>
-            <h3 style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">
-                How the ResumeAI Algorithmic Engine Works
-            </h3>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
-                4-Stage deterministic pipeline combining Natural Language Processing with classical Computer Science Data Structures &amp; Algorithms.
-            </p>
-        </div>
-        <a href="{{ url_for('methodology') }}" class="btn btn-secondary btn-sm">
-            <span>Detailed Methodology</span>
-            <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+    <div class="hero-cta-group">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+            <i class="fa-solid fa-sliders"></i> Start Screening
         </a>
+        <button onclick="triggerSampleDemo()" class="btn btn-secondary btn-lg">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Run 1-Click Demo
+        </button>
     </div>
 
-    <div class="pipeline-steps-grid">
-        <!-- Step 1 -->
-        <div class="pipeline-step-card">
-            <div class="pipeline-step-top">
-                <div class="pipeline-icon-box">
-                    <i data-lucide="file-search" style="width: 18px; height: 18px;"></i>
-                </div>
-                <span class="pipeline-order">STAGE 01</span>
+    <!-- Quick Stats Banner -->
+    <div class="quick-stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon icon-blue"><i class="fa-solid fa-file-pdf"></i></div>
+            <div class="stat-info">
+                <h3>Multi-PDF Extraction</h3>
+                <p>Pure Python PDF text & entity parser</p>
             </div>
-            <h4 class="pipeline-step-title">Job Spec NLP Analysis</h4>
-            <p class="pipeline-step-desc">
-                Normalizes text, removes stopwords, and matches keywords against a 70+ technology skill taxonomy.
-            </p>
-            <span class="pipeline-complexity">O(m) Tokenization</span>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-purple"><i class="fa-solid fa-network-wired"></i></div>
+            <div class="stat-info">
+                <h3>TF-IDF & Cosine NLP</h3>
+                <p>Semantic document vectorization</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-green"><i class="fa-solid fa-arrow-down-9-1"></i></div>
+            <div class="stat-info">
+                <h3>Merge Sort & Max-Heap</h3>
+                <p>Strict O(N log N) candidate ranking</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-amber"><i class="fa-solid fa-circle-nodes"></i></div>
+            <div class="stat-info">
+                <h3>Explainable Scoring</h3>
+                <p>Transparent factor breakdown</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- System Architecture & Workflow -->
+<section class="workflow-section">
+    <div class="section-header text-center">
+        <span class="section-tag">System Pipeline</span>
+        <h2 class="section-title">How the Screening Engine Works</h2>
+        <p class="section-desc">From unstructured PDF resumes to ranked, explainable candidate recommendations.</p>
+    </div>
+
+    <div class="workflow-steps">
+        <div class="workflow-step">
+            <div class="step-number">1</div>
+            <div class="step-icon"><i class="fa-solid fa-briefcase"></i></div>
+            <h4>Job Description</h4>
+            <p>Recruiter enters requirements; NLP extracts skills, experience & education benchmarks.</p>
         </div>
 
-        <!-- Step 2 -->
-        <div class="pipeline-step-card">
-            <div class="pipeline-step-top">
-                <div class="pipeline-icon-box" style="background: var(--cobalt-light); color: var(--cobalt);">
-                    <i data-lucide="file-text" style="width: 18px; height: 18px;"></i>
-                </div>
-                <span class="pipeline-order">STAGE 02</span>
-            </div>
-            <h4 class="pipeline-step-title">PDF Entity Extraction</h4>
-            <p class="pipeline-step-desc">
-                Extracts raw streams via <code>pypdf</code>. Regex patterns parse contact info, degree tier, and years of experience.
-            </p>
-            <span class="pipeline-complexity" style="color: var(--cobalt); background: rgba(37, 99, 235, 0.08);">pypdf + Regex Heuristics</span>
+        <div class="workflow-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+
+        <div class="workflow-step">
+            <div class="step-number">2</div>
+            <div class="step-icon"><i class="fa-solid fa-file-lines"></i></div>
+            <h4>Resume Parsing</h4>
+            <p>Extracts text from uploaded PDF resumes without hallucination.</p>
         </div>
 
-        <!-- Step 3 -->
-        <div class="pipeline-step-card">
-            <div class="pipeline-step-top">
-                <div class="pipeline-icon-box" style="background: var(--violet-light); color: var(--violet);">
-                    <i data-lucide="binary" style="width: 18px; height: 18px;"></i>
-                </div>
-                <span class="pipeline-order">STAGE 03</span>
-            </div>
-            <h4 class="pipeline-step-title">TF-IDF Vector Matching</h4>
-            <p class="pipeline-step-desc">
-                Computes term-frequency inverse document frequency vectors and cosine similarity between JD and candidate profiles.
-            </p>
-            <span class="pipeline-complexity" style="color: var(--violet); background: rgba(124, 58, 237, 0.08);">O(V) Cosine Vector Space</span>
+        <div class="workflow-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+
+        <div class="workflow-step">
+            <div class="step-number">3</div>
+            <div class="step-icon"><i class="fa-solid fa-brain"></i></div>
+            <h4>AI / NLP Matching</h4>
+            <p>Computes skill set intersections and TF-IDF cosine similarity.</p>
         </div>
 
-        <!-- Step 4 -->
-        <div class="pipeline-step-card">
-            <div class="pipeline-step-top">
-                <div class="pipeline-icon-box" style="background: var(--emerald-light); color: var(--emerald);">
-                    <i data-lucide="sort-desc" style="width: 18px; height: 18px;"></i>
-                </div>
-                <span class="pipeline-order">STAGE 04</span>
+        <div class="workflow-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+
+        <div class="workflow-step">
+            <div class="step-number">4</div>
+            <div class="step-icon"><i class="fa-solid fa-ranking-star"></i></div>
+            <h4>DSA Ranking</h4>
+            <p>Custom Merge Sort and Max-Heap generate the ranked leaderboard.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Explainable Scoring Weights Section -->
+<section class="scoring-section">
+    <div class="section-header text-center">
+        <span class="section-tag">Evaluation Model</span>
+        <h2 class="section-title">Configurable 4-Factor Scoring</h2>
+        <p class="section-desc">Clear, non-blackbox scoring formula tailored for recruitement transparency.</p>
+    </div>
+
+    <div class="scoring-grid">
+        <div class="weight-card">
+            <div class="weight-percentage text-primary">50%</div>
+            <h3>Skill Match</h3>
+            <p>Mathematical set intersection between job-required skills and candidate skill inventory.</p>
+        </div>
+        <div class="weight-card">
+            <div class="weight-percentage text-purple">20%</div>
+            <h3>Experience Match</h3>
+            <p>Numerical comparison of verified work tenure against specified minimum role requirements.</p>
+        </div>
+        <div class="weight-card">
+            <div class="weight-percentage text-emerald">10%</div>
+            <h3>Education Level</h3>
+            <p>Degree hierarchy qualification alignment (Ph.D., Master's, Bachelor's, Diploma).</p>
+        </div>
+        <div class="weight-card">
+            <div class="weight-percentage text-amber">20%</div>
+            <h3>Semantic TF-IDF</h3>
+            <p>Cosine similarity on normalized term frequency vectors for domain keyword affinity.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Academic & DSA Details -->
+<section class="about-section">
+    <div class="about-card">
+        <div class="about-header">
+            <i class="fa-solid fa-code"></i>
+            <div>
+                <h3>Academic & Technical Foundations</h3>
+                <p>Designed and structured specifically to demonstrate core Computer Science topics.</p>
             </div>
-            <h4 class="pipeline-step-title">Merge Sort &amp; Heap Ranking</h4>
-            <p class="pipeline-step-desc">
-                Ranks all candidates with stable divide-and-conquer Merge Sort and extracts top-k with Max-Heap Priority Queue.
-            </p>
-            <span class="pipeline-complexity" style="color: var(--emerald); background: rgba(16, 185, 129, 0.08);">O(n log n) Stable Sort</span>
+        </div>
+        <div class="about-grid">
+            <div class="about-item">
+                <h4><i class="fa-solid fa-calculator text-primary"></i> Data Structures & Algorithms</h4>
+                <ul>
+                    <li><strong>Merge Sort & Quick Sort:</strong> Implemented manually in <code>algorithms.py</code> for candidate ranking.</li>
+                    <li><strong>Max-Heap (Priority Queue):</strong> Dynamic heap for $O(1)$ top candidate peek and $O(K \log N)$ top-K retrieval.</li>
+                    <li><strong>Inverted Index & Hash Maps:</strong> O(1) skill-to-candidate dictionary lookups.</li>
+                    <li><strong>Binary Search:</strong> Fast $O(\log N)$ candidate name retrieval on sorted sets.</li>
+                </ul>
+            </div>
+            <div class="about-item">
+                <h4><i class="fa-solid fa-robot text-purple"></i> Natural Language Processing</h4>
+                <ul>
+                    <li><strong>Tokenization & Normalization:</strong> Custom stop-word removal and punctuation cleaning.</li>
+                    <li><strong>Skill Taxonomy:</strong> Curated taxonomy covering 60+ technologies and canonical aliases.</li>
+                    <li><strong>TF-IDF & Cosine Metric:</strong> Pure Python vector dot products with L2 normalization.</li>
+                    <li><strong>Zero External Paid APIs:</strong> Fully self-contained and runnable offline.</li>
+                </ul>
+            </div>
         </div>
     </div>
 </section>

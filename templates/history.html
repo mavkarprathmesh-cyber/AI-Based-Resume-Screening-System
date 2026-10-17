@@ -1,288 +1,82 @@
 {% extends 'base.html' %}
 
-{% block title %}Screening History & Sessions Archive | ResumeAI{% endblock %}
+{% block title %}Screening History - AI Resume Screening{% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<div class="workspace-header mb-4">
+<div class="dashboard-header">
     <div>
         <h1 class="page-title">Screening History & Sessions</h1>
-        <p class="page-subtitle">Access previous evaluation runs, compare candidate pool performance, and review AI rankings.</p>
+        <p class="page-subtitle">Access previous candidate evaluation runs and job screening results.</p>
     </div>
-    <div class="workspace-actions">
-        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
-            <i data-lucide="plus" class="icon-sm"></i>
-            <span>New Screening</span>
+    <div class="dashboard-quick-actions">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-plus"></i> New Screening
         </a>
-        <button type="button" class="btn btn-secondary" onclick="triggerSampleDemo()">
-            <i data-lucide="sparkles" class="icon-sm text-primary"></i>
-            <span>Run Sample Demo</span>
-        </button>
     </div>
 </div>
 
 {% if jobs %}
-    <!-- Summary Metrics Row -->
-    <div class="metric-grid mb-4">
-        <div class="card metric-card">
-            <div class="metric-top">
-                <span class="metric-title">Recorded Sessions</span>
-                <div class="metric-icon-wrap bg-primary-light text-primary">
-                    <i data-lucide="archive" class="icon-sm"></i>
+    <div class="history-grid">
+        {% for job in jobs %}
+            <div class="card history-card">
+                <div class="history-card-header">
+                    <div>
+                        <div class="history-badge-row">
+                            <span class="badge badge-secondary">Job #{{ job.id }}</span>
+                            <span class="history-date"><i class="fa-regular fa-clock"></i> {{ job.created_at[:16] if job.created_at else 'Recent' }}</span>
+                        </div>
+                        <h3 class="history-job-title">{{ job.job_title }}</h3>
+                    </div>
+                    <button type="button" class="btn btn-ghost btn-xs text-danger" title="Delete Session" onclick="deleteJob({{ job.id }})">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
                 </div>
-            </div>
-            <div class="metric-val">{{ jobs|length }}</div>
-            <div class="metric-foot text-xs text-muted">
-                <span>Active screening jobs stored</span>
-            </div>
-        </div>
 
-        <div class="card metric-card">
-            <div class="metric-top">
-                <span class="metric-title">Candidates Evaluated</span>
-                <div class="metric-icon-wrap bg-violet-light text-violet">
-                    <i data-lucide="users" class="icon-sm"></i>
+                <div class="history-stats-row">
+                    <div class="history-stat">
+                        <span class="stat-number">{{ job.candidate_count }}</span>
+                        <span class="stat-label">Candidates</span>
+                    </div>
+                    <div class="history-stat">
+                        <span class="stat-number text-emerald">{{ job.top_score }}%</span>
+                        <span class="stat-label">Top Score</span>
+                    </div>
+                    <div class="history-stat">
+                        <span class="stat-number text-purple">{{ job.avg_score }}%</span>
+                        <span class="stat-label">Avg Score</span>
+                    </div>
                 </div>
-            </div>
-            <div class="metric-val">{{ jobs|sum(attribute='candidate_count') }}</div>
-            <div class="metric-foot text-xs text-muted">
-                <span>Total resumes processed</span>
-            </div>
-        </div>
 
-        <div class="card metric-card">
-            <div class="metric-top">
-                <span class="metric-title">Mean Candidate Pool Score</span>
-                <div class="metric-icon-wrap bg-emerald-light text-emerald">
-                    <i data-lucide="target" class="icon-sm"></i>
-                </div>
-            </div>
-            <div class="metric-val">
-                {% if jobs|length > 0 %}
-                    {{ (jobs|sum(attribute='avg_score') / jobs|length)|round(1) }}%
-                {% else %}
-                    0.0%
-                {% endif %}
-            </div>
-            <div class="metric-foot text-xs text-muted">
-                <span>Average across all roles</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filter and Search Toolbar -->
-    <div class="card p-3 mb-4 filter-toolbar-card">
-        <div class="history-filter-grid">
-            <div class="search-input-wrap flex-1">
-                <i data-lucide="search" class="icon-sm search-icon"></i>
-                <input type="text" id="historySearchInput" class="form-input search-input" placeholder="Search sessions by job title, ID, or required skills..." onkeyup="filterHistorySessions()">
-            </div>
-            <div class="history-filter-actions">
-                <select id="historySortSelect" class="form-input form-select text-xs" onchange="sortHistorySessions()">
-                    <option value="recent">Sort: Most Recent</option>
-                    <option value="candidates">Sort: Highest Candidate Count</option>
-                    <option value="score">Sort: Highest Top Score</option>
-                </select>
-                <button type="button" class="btn btn-ghost btn-sm" onclick="resetHistoryFilters()">
-                    <i data-lucide="rotate-ccw" class="icon-xs"></i>
-                    <span>Reset</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- History Sessions Table View -->
-    <div class="card overflow-hidden mb-5">
-        <div class="table-responsive">
-            <table class="data-table" id="historySessionsTable">
-                <thead>
-                    <tr>
-                        <th style="width: 70px;">ID</th>
-                        <th style="min-width: 240px;">Position / Target Role</th>
-                        <th style="min-width: 140px;">Date Screened</th>
-                        <th style="text-align: center; width: 110px;">Candidates</th>
-                        <th style="text-align: center; width: 120px;">Top Score</th>
-                        <th style="text-align: center; width: 120px;">Avg Score</th>
-                        <th style="text-align: right; width: 180px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="historyTableBody">
-                    {% for job in jobs %}
-                        <tr class="history-row" data-job-id="{{ job.id }}" data-title="{{ job.job_title|lower }}" data-skills="{{ job.required_skills|join(' ')|lower }}" data-candidates="{{ job.candidate_count }}" data-score="{{ job.top_score }}">
-                            <td>
-                                <span class="badge badge-neutral font-mono">#{{ job.id }}</span>
-                            </td>
-                            <td>
-                                <div class="font-bold text-slate-800 text-sm mb-1">{{ job.job_title }}</div>
-                                <div class="tag-cloud">
-                                    {% for s in job.required_skills[:4] %}
-                                        <span class="pill-tag pill-tag-bonus text-xs">{{ s }}</span>
-                                    {% endfor %}
-                                    {% if job.required_skills|length > 4 %}
-                                        <span class="pill-tag pill-tag-more text-xs">+{{ job.required_skills|length - 4 }}</span>
-                                    {% endif %}
-                                </div>
-                            </td>
-                            <td>
-                                <div class="flex items-center gap-1.5 text-xs text-slate-600">
-                                    <i data-lucide="calendar" class="icon-xs text-muted"></i>
-                                    <span>{{ job.created_at[:16] if job.created_at else 'Recent' }}</span>
-                                </div>
-                            </td>
-                            <td style="text-align: center;">
-                                <span class="font-semibold text-slate-700 text-sm">{{ job.candidate_count }}</span>
-                            </td>
-                            <td style="text-align: center;">
-                                <span class="badge {% if job.top_score >= 70 %}badge-strong{% elif job.top_score >= 45 %}badge-moderate{% else %}badge-low{% endif %}">
-                                    {{ job.top_score }}%
-                                </span>
-                            </td>
-                            <td style="text-align: center;">
-                                <span class="text-xs font-semibold text-slate-700">{{ job.avg_score }}%</span>
-                            </td>
-                            <td style="text-align: right;">
-                                <div class="flex items-center justify-end gap-1.5">
-                                    <a href="{{ url_for('view_results', job_id=job.id) }}" class="btn btn-outline-primary btn-xs">
-                                        <span>Leaderboard</span>
-                                        <i data-lucide="arrow-right" class="icon-xs"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-ghost btn-xs text-danger" title="Delete Session" onclick="confirmDeleteJob({{ job.id }}, '{{ job.job_title|replace("'", "\\'") }}')">
-                                        <i data-lucide="trash-2" class="icon-xs"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+                <div class="history-skills-preview">
+                    {% for s in job.required_skills[:5] %}
+                        <span class="skill-chip skill-req">{{ s }}</span>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+                    {% if job.required_skills|length > 5 %}
+                        <span class="skill-chip-more">+{{ job.required_skills|length - 5 }}</span>
+                    {% endif %}
+                </div>
 
-    <!-- Danger Zone Management -->
-    <div class="card p-4 border-danger-subtle bg-slate-50 mt-5">
-        <div class="flex items-center justify-between flex-wrap gap-3">
-            <div>
-                <h4 class="font-bold text-danger text-sm flex items-center gap-2">
-                    <i data-lucide="alert-triangle" class="icon-sm"></i>
-                    Session & Data Management
-                </h4>
-                <p class="text-xs text-slate-600 mt-1">Permanently reset the screening database and wipe uploaded sample files. This action cannot be reversed.</p>
+                <div class="history-card-footer">
+                    <a href="{{ url_for('view_results', job_id=job.id) }}" class="btn btn-primary btn-sm btn-block">
+                        View Leaderboard <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
             </div>
-            <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmClearAllData()">
-                <i data-lucide="trash-2" class="icon-xs"></i> Clear All Screening Records
-            </button>
-        </div>
+        {% endfor %}
     </div>
-
 {% else %}
-    <!-- Empty State -->
-    <div class="card empty-state-box text-center py-6 px-4">
-        <div class="empty-icon-wrap mb-3 mx-auto">
-            <i data-lucide="folder-search" class="icon-xl text-muted"></i>
-        </div>
-        <h3 class="font-bold text-slate-800 text-lg mb-1">No Screening Sessions Recorded</h3>
-        <p class="text-sm text-slate-500 max-w-md mx-auto mb-4">Start your first AI resume screening run or launch the 1-click sample demo with pre-configured candidate profiles.</p>
-        <div class="flex items-center justify-center gap-3">
+    <div class="card empty-history-card text-center py-5">
+        <div class="empty-icon"><i class="fa-solid fa-folder-open"></i></div>
+        <h3>No Screening Sessions Recorded Yet</h3>
+        <p class="text-muted">Start by creating a new job screening or load our 1-click sample demo.</p>
+        <div class="empty-actions mt-4">
             <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
-                <i data-lucide="sliders" class="icon-sm"></i>
-                <span>Open Screening Workspace</span>
+                <i class="fa-solid fa-sliders"></i> Go to Dashboard
             </a>
-            <button type="button" class="btn btn-secondary" onclick="triggerSampleDemo()">
-                <i data-lucide="sparkles" class="icon-sm text-primary"></i>
-                <span>Run 1-Click Demo</span>
+            <button onclick="triggerSampleDemo()" class="btn btn-outline-primary">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Run 1-Click Demo
             </button>
         </div>
     </div>
 {% endif %}
-
-<script>
-function filterHistorySessions() {
-    const query = document.getElementById('historySearchInput').value.toLowerCase().trim();
-    const rows = document.querySelectorAll('.history-row');
-
-    rows.forEach(row => {
-        const title = row.getAttribute('data-title') || '';
-        const id = row.getAttribute('data-job-id') || '';
-        const skills = row.getAttribute('data-skills') || '';
-        const match = title.includes(query) || id.includes(query) || skills.includes(query);
-        row.style.display = match ? '' : 'none';
-    });
-}
-
-function sortHistorySessions() {
-    const sortVal = document.getElementById('historySortSelect').value;
-    const tbody = document.getElementById('historyTableBody');
-    const rows = Array.from(tbody.querySelectorAll('.history-row'));
-
-    rows.sort((a, b) => {
-        if (sortVal === 'candidates') {
-            return parseInt(b.getAttribute('data-candidates')) - parseInt(a.getAttribute('data-candidates'));
-        } else if (sortVal === 'score') {
-            return parseFloat(b.getAttribute('data-score')) - parseFloat(a.getAttribute('data-score'));
-        } else {
-            // Default: Most recent (by ID descending)
-            return parseInt(b.getAttribute('data-job-id')) - parseInt(a.getAttribute('data-job-id'));
-        }
-    });
-
-    rows.forEach(r => tbody.appendChild(r));
-}
-
-function resetHistoryFilters() {
-    document.getElementById('historySearchInput').value = '';
-    document.getElementById('historySortSelect').value = 'recent';
-    filterHistorySessions();
-    sortHistorySessions();
-}
-
-function confirmDeleteJob(jobId, jobTitle) {
-    showConfirmModal(
-        'Delete Screening Session',
-        `Are you sure you want to permanently delete session #${jobId} ("${jobTitle}") and all associated candidate rankings?`,
-        () => {
-            fetch(`/api/delete-job/${jobId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    window.location.reload();
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert('Failed to delete session.');
-            });
-        }
-    );
-}
-
-function confirmClearAllData() {
-    showConfirmModal(
-        'Reset Screening Database',
-        'WARNING: This will permanently wipe all screening sessions, candidate records, and uploaded PDFs. Do you want to continue?',
-        () => {
-            fetch('/api/clear-data', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    window.location.reload();
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert('Failed to reset database.');
-            });
-        }
-    );
-}
-</script>
 {% endblock %}

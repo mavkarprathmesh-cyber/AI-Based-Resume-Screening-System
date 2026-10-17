@@ -1,383 +1,281 @@
 {% extends 'base.html' %}
 
-{% block title %}Screening Results: {{ job.job_title }} - ResumeAI{% endblock %}
-{% block breadcrumb %}Screening Results &bull; #{{ job.id }}{% endblock %}
+{% block title %}Screening Results - {{ job.job_title }}{% endblock %}
 
 {% block content %}
-<!-- 1. Header Banner & Job Specification Summary -->
-<div class="results-header-banner">
-    <div class="results-job-info">
-        <div class="results-meta-row">
-            <span class="badge-pill" style="background: var(--primary-light); color: var(--primary); border-color: var(--primary-border);">
-                <i data-lucide="hash" style="width: 12px; height: 12px;"></i>
-                Job #{{ job.id }}
-            </span>
-            <span class="badge-pill">
-                <i data-lucide="calendar" style="width: 12px; height: 12px;"></i>
-                {{ job.created_at[:10] if job.created_at else 'Recent' }}
-            </span>
-            {% if job.required_experience > 0 %}
-                <span class="badge-pill">
-                    <i data-lucide="clock" style="width: 12px; height: 12px;"></i>
-                    {{ job.required_experience|format_exp }}+ Years Required
-                </span>
-            {% endif %}
-            <span class="badge-pill" style="background: var(--emerald-light); color: var(--emerald-text);">
-                <i data-lucide="shield-check" style="width: 12px; height: 12px;"></i>
-                Custom Merge Sort Ranked
-            </span>
-        </div>
-
-        <h1 class="results-job-title">{{ job.job_title }}</h1>
-        <p style="font-size: 0.85rem; color: var(--text-muted); max-width: 820px; line-height: 1.45;">
-            {{ job.job_description[:200] }}{% if job.job_description|length > 200 %}...{% endif %}
-        </p>
-
-        <!-- Required Skills Tags -->
-        {% if job.required_skills %}
-            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
-                <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted);">
-                    Target Skills:
-                </span>
-                <div class="skill-tags-group">
-                    {% for s in job.required_skills %}
-                        <span class="skill-tag" style="background: var(--primary-light); color: var(--primary); border-color: var(--primary-border); font-weight: 600;">
-                            <i data-lucide="check" style="width: 12px; height: 12px;"></i>
-                            {{ s }}
-                        </span>
-                    {% endfor %}
-                </div>
+<!-- Top Header & Job Summary -->
+<div class="results-header-card card">
+    <div class="results-header-content">
+        <div>
+            <div class="results-badge-bar">
+                <span class="badge badge-primary"><i class="fa-solid fa-briefcase"></i> Job ID #{{ job.id }}</span>
+                <span class="badge badge-secondary"><i class="fa-solid fa-calendar"></i> {{ job.created_at[:10] if
+                    job.created_at else 'Recent' }}</span>
+                {% if job.required_experience > 0 %}
+                <span class="badge badge-purple"><i class="fa-solid fa-business-time"></i> {{
+                    job.required_experience|format_exp }}+ Yrs Required</span>
+                {% endif %}
             </div>
-        {% endif %}
-    </div>
-
-    <!-- Actions Group -->
-    <div class="results-actions-group">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="exportResultsCSV('{{ job.job_title|escape }}')" title="Download CSV Spreadsheet">
-            <i data-lucide="file-spreadsheet" style="width: 15px; height: 15px; color: var(--emerald);"></i>
-            <span>Export CSV</span>
-        </button>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="exportResultsJSON('{{ job.job_title|escape }}')" title="Download JSON Data">
-            <i data-lucide="download" style="width: 15px; height: 15px; color: var(--cobalt);"></i>
-            <span>Export JSON</span>
-        </button>
-        <button type="button" class="btn btn-danger-outline btn-sm" onclick="confirmDeleteJob({{ job.id }}, '{{ job.job_title|escape }}')" title="Delete Entire Screening Session">
-            <i data-lucide="trash-2" style="width: 15px; height: 15px;"></i>
-            <span>Delete</span>
-        </button>
-    </div>
-</div>
-
-<!-- 2. KPI Summary Row -->
-<div class="metrics-grid">
-    <div class="metric-card">
-        <div class="metric-header">
-            <span class="metric-label">Screened Candidates</span>
-            <div class="metric-icon-wrap metric-icon-indigo">
-                <i data-lucide="users" style="width: 18px; height: 18px;"></i>
-            </div>
+            <h1 class="results-job-title">{{ job.job_title }}</h1>
+            <p class="results-job-desc">{{ job.job_description[:180] }}...</p>
         </div>
-        <div class="metric-value-row">
-            <span class="metric-value">{{ total_count }}</span>
-            <span class="metric-unit">evaluated</span>
-        </div>
-        <div class="metric-subtext">
-            <span>Deterministic 4-factor scoring</span>
-        </div>
-    </div>
-
-    <div class="metric-card">
-        <div class="metric-header">
-            <span class="metric-label">Average Match Score</span>
-            <div class="metric-icon-wrap metric-icon-emerald">
-                <i data-lucide="activity" style="width: 18px; height: 18px;"></i>
-            </div>
-        </div>
-        <div class="metric-value-row">
-            <span class="metric-value">{{ avg_score }}</span>
-            <span class="metric-unit">%</span>
-        </div>
-        <div class="metric-subtext">
-            <span>Pool mean benchmark</span>
-        </div>
-    </div>
-
-    <div class="metric-card">
-        <div class="metric-header">
-            <span class="metric-label">Highest Score</span>
-            <div class="metric-icon-wrap metric-icon-amber">
-                <i data-lucide="crown" style="width: 18px; height: 18px;"></i>
-            </div>
-        </div>
-        <div class="metric-value-row">
-            <span class="metric-value" style="color: var(--emerald);">
-                {{ top_candidate.match_score if top_candidate else 0 }}
-            </span>
-            <span class="metric-unit">%</span>
-        </div>
-        <div class="metric-subtext">
-            <span>Leader: <strong>{{ top_candidate.name if top_candidate else 'None' }}</strong></span>
-        </div>
-    </div>
-
-    <div class="metric-card">
-        <div class="metric-header">
-            <span class="metric-label">Ranking Algorithm</span>
-            <div class="metric-icon-wrap metric-icon-cobalt">
-                <i data-lucide="git-merge" style="width: 18px; height: 18px;"></i>
-            </div>
-        </div>
-        <div class="metric-value-row">
-            <span class="metric-value" style="font-size: 1.45rem;">Merge Sort</span>
-        </div>
-        <div class="metric-subtext">
-            <i data-lucide="check" style="width: 13px; height: 13px; color: var(--emerald);"></i>
-            <span>O(n log n) stable sorting</span>
-        </div>
-    </div>
-</div>
-
-<!-- 3. Spotlight Banner for #1 Top Candidate -->
-{% if top_candidate %}
-    <div class="spotlight-banner">
-        <div style="display: flex; align-items: center; gap: 16px;">
-            <div class="profile-avatar-box" style="width: 50px; height: 50px; font-size: 1.25rem;">
-                <i data-lucide="trophy"></i>
-            </div>
-            <div>
-                <span class="spotlight-badge">
-                    <i data-lucide="sparkles" style="width: 12px; height: 12px;"></i>
-                    #1 Top Match Candidate
-                </span>
-                <h3 class="spotlight-cand-name">{{ top_candidate.name }}</h3>
-                <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
-                    {{ top_candidate.email }} &bull; {{ top_candidate.experience_years|format_exp }} Years Experience &bull; {{ top_candidate.matched_skills|length }} of {{ job.required_skills|length }} Required Skills Matched
-                </p>
-            </div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="text-align: right;">
-                <div class="spotlight-score-chip">{{ top_candidate.match_score }}%</div>
-                <span class="status-chip status-chip-strong">Top Rank</span>
-            </div>
-            <a href="{{ url_for('candidate_detail', candidate_id=top_candidate.id) }}" class="btn btn-primary btn-sm">
-                <span>View Full Profile</span>
-                <i data-lucide="arrow-right" style="width: 15px; height: 15px;"></i>
+        <div class="results-header-actions">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary btn-sm">
+                <i class="fa-solid fa-plus"></i> New Screening
             </a>
+            <button onclick="window.print()" class="btn btn-ghost btn-sm" title="Print / Export Report">
+                <i class="fa-solid fa-print"></i> Export
+            </button>
         </div>
     </div>
-{% endif %}
 
-<!-- 4. Search & Filter Toolbar -->
-<div class="filter-toolbar">
-    <div class="filter-left">
-        <!-- Live Name/Email Search -->
-        <div class="search-input-wrap">
-            <i data-lucide="search"></i>
-            <input type="text" id="candidateSearch" class="form-control" placeholder="Search candidate by name or email...">
-        </div>
-
-        <!-- Score Range Filter -->
-        <select id="scoreFilterSelect" class="filter-select">
-            <option value="all">All Match Scores</option>
-            <option value="strong">Strong Match (&ge; 75%)</option>
-            <option value="moderate">Moderate Match (50 - 74%)</option>
-            <option value="low">Low Alignment (&lt; 50%)</option>
-        </select>
-
-        <!-- Sorting Selector -->
-        <select id="rankSortSelect" class="filter-select">
-            <option value="rank">Sort by Rank (Merge Sort)</option>
-            <option value="score-desc">Score: High to Low</option>
-            <option value="score-asc">Score: Low to High</option>
-            <option value="exp-desc">Experience: High to Low</option>
-            <option value="name-asc">Candidate Name: A to Z</option>
-        </select>
-    </div>
-
-    <!-- Filter Counter Badge -->
-    <div style="font-size: 0.82rem; color: var(--text-muted);">
-        Showing <strong id="visibleCandidateCount" style="color: var(--text-primary);">{{ total_count }}</strong> of {{ total_count }} candidates
-    </div>
-</div>
-
-<!-- Skill Filter Pills Bar -->
-{% if available_skills %}
-    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
-        <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted);">
-            Filter by Skill:
-        </span>
-        <div class="filter-pills-bar">
-            {% for s in available_skills[:12] %}
-                <button type="button" class="filter-pill filter-skill-pill" data-skill="{{ s }}">
-                    {{ s }}
-                </button>
+    <!-- Required Skills Tag Chips -->
+    {% if job.required_skills %}
+    <div class="required-skills-row">
+        <span class="req-label">Required Target Skills:</span>
+        <div class="skill-chips-wrap">
+            {% for s in job.required_skills %}
+            <span class="skill-chip skill-req"><i class="fa-solid fa-check-double"></i> {{ s }}</span>
             {% endfor %}
         </div>
     </div>
-{% endif %}
+    {% endif %}
+</div>
 
-<!-- 5. Ranked Candidates Table -->
-<div class="card">
-    <div class="card-header">
-        <div>
-            <h3 class="card-title">
-                <i data-lucide="list-ordered" style="width: 18px; height: 18px; color: var(--primary);"></i>
-                <span>Candidate Leaderboard</span>
-            </h3>
-            <p class="card-subtitle">Deterministic ranking generated via Custom Merge Sort (O(n log n))</p>
+<!-- KPI Metric Cards Grid -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-icon icon-blue"><i class="fa-solid fa-users"></i></div>
+        <div class="kpi-data">
+            <span class="kpi-number">{{ total_count }}</span>
+            <span class="kpi-label">Candidates Screened</span>
         </div>
-        <span class="badge-pill">Sorted by Overall Match Score</span>
     </div>
 
-    <div class="card-body" style="padding: 0;">
-        <div class="data-table-wrapper">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th style="width: 60px;">Rank</th>
-                        <th>Candidate Profile</th>
-                        <th>Experience</th>
-                        <th>Matched Skills</th>
-                        <th>Missing Skills</th>
-                        <th style="width: 160px;">Match Score</th>
-                        <th style="width: 130px; text-align: right;">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="candidateTableBody">
-                    {% for cand in candidates %}
-                        <tr class="candidate-row" 
-                            data-rank="{{ cand.rank }}" 
-                            data-name="{{ cand.name|lower }}" 
-                            data-email="{{ cand.email|lower }}" 
-                            data-phone="{{ cand.phone }}"
-                            data-exp="{{ cand.experience_years }}" 
-                            data-score="{{ cand.match_score }}" 
-                            data-status="{{ cand.badge }}" 
-                            data-skills="{{ (cand.skills|join(' '))|lower }}"
-                            data-matched="{{ cand.matched_skills|join(', ') }}"
-                            data-missing="{{ cand.missing_skills|join(', ') }}">
-                            
-                            <!-- Rank -->
-                            <td>
-                                <div class="rank-badge {% if cand.rank == 1 %}rank-badge-1{% elif cand.rank == 2 %}rank-badge-2{% elif cand.rank == 3 %}rank-badge-3{% endif %}">
-                                    {{ cand.rank }}
-                                </div>
-                            </td>
-
-                            <!-- Candidate Details -->
-                            <td>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div class="profile-avatar-box" style="width: 36px; height: 36px; font-size: 0.85rem; border-radius: var(--radius-sm);">
-                                        {{ cand.name[:2]|upper if cand.name != 'Not Available' else 'NA' }}
-                                    </div>
-                                    <div>
-                                        <a href="{{ url_for('candidate_detail', candidate_id=cand.id) }}" style="font-weight: 700; color: var(--text-primary);">
-                                            {{ cand.name }}
-                                        </a>
-                                        <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px; margin-top: 2px;">
-                                            {% if cand.email != 'Not Available' %}
-                                                <span>{{ cand.email }}</span>
-                                            {% endif %}
-                                            {% if cand.phone != 'Not Available' %}
-                                                <span>&bull; {{ cand.phone }}</span>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-
-                            <!-- Experience -->
-                            <td>
-                                <span class="badge-pill">
-                                    {{ cand.experience_years|format_exp }} Yrs
-                                </span>
-                            </td>
-
-                            <!-- Matched Skills -->
-                            <td>
-                                <div class="skill-tags-group">
-                                    {% if cand.matched_skills %}
-                                        {% for s in cand.matched_skills[:3] %}
-                                            <span class="skill-tag skill-tag-emerald">{{ s }}</span>
-                                        {% endfor %}
-                                        {% if cand.matched_skills|length > 3 %}
-                                            <span class="skill-tag" style="background: var(--bg-muted); font-size: 0.7rem;">
-                                                +{{ cand.matched_skills|length - 3 }} more
-                                            </span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span style="font-size: 0.78rem; color: var(--text-faint);">None</span>
-                                    {% endif %}
-                                </div>
-                            </td>
-
-                            <!-- Missing Skills -->
-                            <td>
-                                <div class="skill-tags-group">
-                                    {% if cand.missing_skills %}
-                                        {% for s in cand.missing_skills[:2] %}
-                                            <span class="skill-tag skill-tag-rose">{{ s }}</span>
-                                        {% endfor %}
-                                        {% if cand.missing_skills|length > 2 %}
-                                            <span class="skill-tag" style="background: var(--bg-muted); font-size: 0.7rem;">
-                                                +{{ cand.missing_skills|length - 2 }}
-                                            </span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span style="font-size: 0.75rem; color: var(--emerald); font-weight: 600; display: flex; align-items: center; gap: 4px;">
-                                            <i data-lucide="check-check" style="width: 14px; height: 14px;"></i> None
-                                        </span>
-                                    {% endif %}
-                                </div>
-                            </td>
-
-                            <!-- Match Score Meter -->
-                            <td>
-                                <div class="score-cell-meter">
-                                    <div class="score-meter-bar">
-                                        <div class="score-meter-fill {% if cand.match_score >= 75 %}dist-fill-strong{% elif cand.match_score >= 50 %}dist-fill-moderate{% else %}dist-fill-low{% endif %}"
-                                             style="width: {{ cand.match_score }}%;"></div>
-                                    </div>
-                                    <span class="score-num" style="color: {% if cand.match_score >= 75 %}var(--emerald){% elif cand.match_score >= 50 %}var(--amber){% else %}var(--rose){% endif %};">
-                                        {{ cand.match_score }}%
-                                    </span>
-                                </div>
-                                <div style="margin-top: 4px;">
-                                    <span class="status-chip {% if cand.match_score >= 75 %}status-chip-strong{% elif cand.match_score >= 50 %}status-chip-moderate{% else %}status-chip-low{% endif %}">
-                                        {{ cand.badge or ('Strong' if cand.match_score >= 75 else ('Moderate' if cand.match_score >= 50 else 'Low Alignment')) }}
-                                    </span>
-                                </div>
-                            </td>
-
-                            <!-- Action Buttons -->
-                            <td style="text-align: right;">
-                                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
-                                    <a href="{{ url_for('candidate_detail', candidate_id=cand.id) }}" class="btn btn-secondary btn-sm" title="View Full Candidate Report">
-                                        <span>Profile</span>
-                                        <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-ghost btn-sm" style="color: var(--rose);" onclick="confirmDeleteCandidate({{ cand.id }}, '{{ cand.name|escape }}')" title="Delete Candidate">
-                                        <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-
-                    <!-- No Results Row for Filters -->
-                    <tr id="noResultsRow" style="display: none;">
-                        <td colspan="7" style="text-align: center; padding: 36px 16px;">
-                            <div class="empty-icon-box">
-                                <i data-lucide="search-x" style="width: 24px; height: 24px;"></i>
-                            </div>
-                            <h4 class="empty-title">No Matching Candidates Found</h4>
-                            <p class="empty-desc">Try clearing search terms or selecting different score and skill filters.</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    <div class="kpi-card">
+        <div class="kpi-icon icon-purple"><i class="fa-solid fa-chart-line"></i></div>
+        <div class="kpi-data">
+            <span class="kpi-number">{{ avg_score }}%</span>
+            <span class="kpi-label">Average Match Score</span>
         </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon icon-green"><i class="fa-solid fa-trophy"></i></div>
+        <div class="kpi-data">
+            <span class="kpi-number text-emerald">
+                {% if top_candidate %}
+                {{ top_candidate.match_score }}%
+                {% else %}
+                N/A
+                {% endif %}
+            </span>
+            <span class="kpi-label">
+                Top Candidate: <strong>{{ top_candidate.name if top_candidate else 'None' }}</strong>
+            </span>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon icon-amber"><i class="fa-solid fa-diagram-project"></i></div>
+        <div class="kpi-data">
+            <span class="kpi-number">MergeSort</span>
+            <span class="kpi-label">DSA Ranked & Verified</span>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filtering Toolbar -->
+<div class="card toolbar-card">
+    <div class="toolbar-flex">
+        <!-- Live Search Input -->
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="candidateSearchInput" class="form-control search-input"
+                placeholder="Search candidates by name, email, or skill..." onkeyup="filterCandidatesTable()">
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <div class="filter-item">
+                <label for="scoreFilter"><i class="fa-solid fa-filter"></i> Min Score:</label>
+                <select id="scoreFilter" class="form-select form-select-sm" onchange="filterCandidatesTable()">
+                    <option value="0">All Scores (0%+)</option>
+                    <option value="85">Excellent Match (85%+)</option>
+                    <option value="70">Strong Match (70%+)</option>
+                    <option value="55">Moderate Match (55%+)</option>
+                </select>
+            </div>
+
+            <div class="filter-item">
+                <label for="sortSelector"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort By:</label>
+                <select id="sortSelector" class="form-select form-select-sm" onchange="sortCandidatesTable()">
+                    <option value="score_desc">Match Score (High to Low)</option>
+                    <option value="score_asc">Match Score (Low to High)</option>
+                    <option value="name_asc">Candidate Name (A - Z)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Skill Filter Chips -->
+    {% if available_skills %}
+    <div class="quick-skill-filters">
+        <span class="filter-tag-label">Filter by Detected Skill:</span>
+        <div class="skill-filter-list">
+            {% for skill in available_skills[:12] %}
+            <button type="button" class="btn-filter-pill" onclick="toggleSkillFilter(this, '{{ skill|lower }}')">
+                {{ skill }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Candidates Ranking Table -->
+<div class="card table-card">
+    <div class="card-header table-card-header">
+        <div>
+            <h3 class="card-title">Ranked Candidate Leaderboard</h3>
+            <p class="card-subtitle">Deterministic ranking generated via Custom Merge Sort (O(N log N))</p>
+        </div>
+        <span id="filteredCountBadge" class="badge badge-secondary">Showing {{ total_count }} candidates</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table" id="candidatesTable">
+            <thead>
+                <tr>
+                    <th style="width: 70px;">Rank</th>
+                    <th>Candidate</th>
+                    <th>Matched Skills</th>
+                    <th>Missing Skills</th>
+                    <th style="width: 220px;">Match Score</th>
+                    <th style="width: 130px; text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="candidatesTableBody">
+                {% for cand in candidates %}
+                <tr class="candidate-row" data-name="{{ cand.name|lower }}" data-email="{{ cand.email|lower }}"
+                    data-skills="{{ (cand.skills|join(' '))|lower }}" data-score="{{ cand.match_score }}">
+
+                    <!-- Rank -->
+                    <td>
+                        <div
+                            class="rank-badge {% if cand.rank == 1 %}rank-1{% elif cand.rank == 2 %}rank-2{% elif cand.rank == 3 %}rank-3{% else %}rank-other{% endif %}">
+                            {% if cand.rank == 1 %}<i class="fa-solid fa-crown text-amber"></i>{% endif %}
+                            #{{ cand.rank }}
+                        </div>
+                    </td>
+
+                    <!-- Candidate Details -->
+                    <td>
+                        <div class="candidate-info-cell">
+                            <div class="candidate-avatar">
+                                {{ cand.name[:2]|upper if cand.name != 'Not Available' else 'NA' }}
+                            </div>
+                            <div>
+                                <div class="candidate-name">
+                                    <a href="{{ url_for('candidate_detail', candidate_id=cand.id) }}">{{ cand.name
+                                        }}</a>
+                                </div>
+                                <div class="candidate-meta">
+                                    {% if cand.email != 'Not Available' %}
+                                    <span><i class="fa-regular fa-envelope"></i> {{ cand.email }}</span>
+                                    {% endif %}
+                                    {% if cand.experience_years > 0 %}
+                                    <span class="meta-sep">•</span>
+                                    <span><i class="fa-solid fa-briefcase"></i> {{ cand.experience_years|format_exp }}
+                                        yrs</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Matched Skills -->
+                    <td>
+                        <div class="skill-chips-cell">
+                            {% if cand.matched_skills %}
+                            {% for s in cand.matched_skills[:4] %}
+                            <span class="skill-chip skill-matched">{{ s }}</span>
+                            {% endfor %}
+                            {% if cand.matched_skills|length > 4 %}
+                            <span class="skill-chip-more">+{{ cand.matched_skills|length - 4 }}</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-muted text-xs">No direct matches</span>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <!-- Missing Skills -->
+                    <td>
+                        <div class="skill-chips-cell">
+                            {% if cand.missing_skills %}
+                            {% for s in cand.missing_skills[:3] %}
+                            <span class="skill-chip skill-missing">{{ s }}</span>
+                            {% endfor %}
+                            {% if cand.missing_skills|length > 3 %}
+                            <span class="skill-chip-more">+{{ cand.missing_skills|length - 3 }}</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-emerald text-xs font-semibold"><i class="fa-solid fa-circle-check"></i>
+                                None</span>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <!-- Match Score with Visual Progress Bar -->
+                    <td>
+                        <div class="score-cell-wrapper">
+                            <div class="score-flex">
+                                <span class="score-number">{{ cand.match_score }}%</span>
+                                <span class="badge {{ cand.badge_class }}">{{ cand.badge }}</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill {% if cand.match_score >= 85 %}fill-excellent{% elif cand.match_score >= 70 %}fill-strong{% elif cand.match_score >= 55 %}fill-moderate{% else %}fill-low{% endif %}"
+                                    style="width: {{ cand.match_score }}%;"></div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Actions -->
+                    <td style="text-align: right;">
+                        <div class="action-buttons-group">
+                            <a href="{{ url_for('candidate_detail', candidate_id=cand.id) }}"
+                                class="btn btn-outline-primary btn-xs" title="View Full Report">
+                                View <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+                            <button type="button" class="btn btn-ghost btn-xs text-danger" title="Remove Candidate"
+                                onclick="deleteCandidate({{ cand.id }})">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-5">
+                        <p class="text-muted">No candidates found for this screening session.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Explainability Callout -->
+<div class="score-formula-card">
+    <div class="formula-icon"><i class="fa-solid fa-circle-info"></i></div>
+    <div class="formula-text">
+        <strong>Recruiter Decision Support Notice:</strong>
+        Match scores are generated as an objective advisory tool using weighted metrics:
+        <code>Skill Match (50%)</code> + <code>Experience (20%)</code> + <code>Education (10%)</code> +
+        <code>TF-IDF Text Similarity (20%)</code>. Final hiring decisions should always involve comprehensive human
+        evaluation.
     </div>
 </div>
 {% endblock %}

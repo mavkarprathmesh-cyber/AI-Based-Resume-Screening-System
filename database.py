@@ -231,62 +231,6 @@ def get_all_jobs() -> List[Dict[str, Any]]:
     return jobs
 
 
-def get_dashboard_analytics() -> Dict[str, Any]:
-    """Computes real cross-screening metrics and skill analytics for the overview dashboard."""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # 1. Candidate statistics
-    cursor.execute("""
-        SELECT 
-            COUNT(id) as total_candidates,
-            AVG(match_score) as avg_score,
-            SUM(CASE WHEN match_score >= 75 THEN 1 ELSE 0 END) as strong_matches,
-            SUM(CASE WHEN match_score >= 50 AND match_score < 75 THEN 1 ELSE 0 END) as moderate_matches,
-            SUM(CASE WHEN match_score < 50 THEN 1 ELSE 0 END) as low_matches
-        FROM candidates
-    """)
-    c_row = cursor.fetchone()
-    
-    # 2. Top detected skills across candidates
-    cursor.execute("""
-        SELECT skill_name, COUNT(*) as count 
-        FROM candidate_skills 
-        GROUP BY skill_name 
-        ORDER BY count DESC 
-        LIMIT 6
-    """)
-    skill_rows = cursor.fetchall()
-    
-    # 3. Recent candidates with job titles
-    cursor.execute("""
-        SELECT c.id, c.name, c.match_score, c.badge, c.badge_class, c.job_id, j.job_title, c.created_at
-        FROM candidates c
-        JOIN jobs j ON c.job_id = j.id
-        ORDER BY c.id DESC
-        LIMIT 5
-    """)
-    recent_cand_rows = cursor.fetchall()
-    conn.close()
-
-    total_cands = c_row["total_candidates"] or 0
-    avg_score = round(c_row["avg_score"], 1) if c_row["avg_score"] is not None else 0.0
-    strong = c_row["strong_matches"] or 0
-    moderate = c_row["moderate_matches"] or 0
-    low = c_row["low_matches"] or 0
-
-    return {
-        "total_candidates": total_cands,
-        "avg_score": avg_score,
-        "strong_matches": strong,
-        "moderate_matches": moderate,
-        "low_matches": low,
-        "top_skills": [{"name": s["skill_name"], "count": s["count"]} for s in skill_rows],
-        "recent_candidates": [dict(r) for r in recent_cand_rows]
-    }
-
-
-
 def get_candidates_for_job(job_id: int) -> List[Dict[str, Any]]:
     """Returns all candidates evaluated for a specific job."""
     conn = get_db_connection()

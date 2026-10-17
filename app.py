@@ -81,46 +81,13 @@ def serve_static(filename: str):
     return send_from_directory(STATIC_DIR, filename)
 
 
-@app.context_processor
-def inject_global_sidebar_data():
-    """Injects latest job information into all templates for sidebar navigation."""
-    try:
-        jobs = database.get_all_jobs()
-        latest_job_id = jobs[0]["id"] if jobs else None
-        return {
-            "global_latest_job_id": latest_job_id,
-            "global_total_screenings": len(jobs)
-        }
-    except Exception:
-        return {
-            "global_latest_job_id": None,
-            "global_total_screenings": 0
-        }
-
-
 @app.route('/')
 def index():
-    """Enterprise Overview Dashboard: KPIs, recent screening sessions, score distribution, and workflow."""
+    """Landing page with project overview, DSA features, and workflow guide."""
     jobs = database.get_all_jobs()
-    analytics = database.get_dashboard_analytics()
     total_screenings = len(jobs)
-    recent_jobs = jobs[:6]
-    latest_job_id = jobs[0]["id"] if jobs else None
-    return render_template(
-        'index.html',
-        total_screenings=total_screenings,
-        analytics=analytics,
-        recent_jobs=recent_jobs,
-        latest_job_id=latest_job_id
-    )
-
-
-@app.route('/methodology')
-def methodology():
-    """Technical Foundations: PDF Parsing, NLP Pipeline, TF-IDF Vectorization, and DSA Algorithms."""
-    jobs = database.get_all_jobs()
-    latest_job_id = jobs[0]["id"] if jobs else None
-    return render_template('methodology.html', latest_job_id=latest_job_id)
+    total_candidates = sum(j.get("candidate_count", 0) for j in jobs)
+    return render_template('index.html', total_screenings=total_screenings, total_candidates=total_candidates)
 
 
 @app.route('/dashboard')
