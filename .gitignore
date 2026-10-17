@@ -11,9 +11,25 @@ env/
 ENV/
 .venv/
 
-# Environment Variables
+# Environment Variables & Secrets
 .env
+.env.*
 .env.local
+*.pem
+*.key
+*.pfx
+*.pkcs12
+
+# Node modules & Build output
+node_modules/
+dist/
+build/
+*.egg-info/
+
+# Database dumps
+*.sql
+*.dump
+*.dump.gz
 
 # IDE & Editor files
 .vscode/
@@ -29,3 +45,4 @@ uploads/*
 
 # Database (optional: uncomment if you don't want to track local sqlite db)
 # database/*.db
+
