@@ -16,7 +16,7 @@ Routes:
 
 import os
 import json
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 
 import database
@@ -31,15 +31,21 @@ from sample_generator import (
     SAMPLE_JOB_DESCRIPTION, SAMPLES_DIR
 )
 
+# Base Directories
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+
 # Initialize Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_folder=STATIC_DIR, template_folder=TEMPLATES_DIR)
 app.secret_key = "fai-resume-screener-secret-key-2026"
 
 # Configuration
 if os.environ.get("VERCEL"):
     UPLOAD_FOLDER = "/tmp/uploads"
 else:
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+    UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+
 
 ALLOWED_EXTENSIONS = {'pdf'}
 MAX_FILE_SIZE = 16 * 1024 * 1024  # 16 MB max upload size
@@ -67,6 +73,12 @@ def format_exp_filter(val):
 def allowed_file(filename: str) -> bool:
     """Checks if uploaded file has valid .pdf extension."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.route('/static/<path:filename>')
+def serve_static(filename: str):
+    """Fallback static asset handler for serverless environments."""
+    return send_from_directory(STATIC_DIR, filename)
 
 
 @app.route('/')
