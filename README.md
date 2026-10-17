@@ -1,9 +1,9 @@
 # AI Based Resume Screening System 🚀
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fsumithatagaledata%2FAI-Based-Resume-Screening-System)
-[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-blue?logo=github)](https://github.com/sumithatagaledata/AI-Based-Resume-Screening-System)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmavkarprathmesh-cyber%2FAI-Based-Resume-Screening-System)
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-blue?logo=github)](https://github.com/mavkarprathmesh-cyber/AI-Based-Resume-Screening-System)
 
-**🌐 Live Demo Link:** [ai-based-resume-screening-system.vercel.app](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fsumithatagaledata%2FAI-Based-Resume-Screening-System) *(Deploy with 1-click on Vercel)*
+**🌐 Live Demo Link:** [ai-based-resume-screening-system-prathmesh-mavkars-projects.vercel.app](https://ai-based-resume-screening-system-prathmesh-mavkars-projects.vercel.app) *(Deployed on Vercel)*
 
 An AI-assisted web application developed for college mini-projects that streamlines and automates resume screening. The system analyzes multiple candidate resumes in PDF format against a provided Job Description using Natural Language Processing (NLP), evaluates candidates across four explainable weighted dimensions, and ranks them using deterministic Data Structures and Algorithms (DSA).
 
