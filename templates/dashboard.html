@@ -1,101 +1,170 @@
 {% extends 'base.html' %}
 
-{% block title %}Recruiter Dashboard - AI Resume Screening{% endblock %}
+{% block title %}New Screening Workspace - ResumeAI{% endblock %}
+{% block breadcrumb %}New Screening{% endblock %}
 
 {% block content %}
-<div class="dashboard-header">
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
     <div>
-        <h1 class="page-title">Recruiter Screening Dashboard</h1>
-        <p class="page-subtitle">Configure job requirements and upload PDF resumes to evaluate candidate matching.</p>
+        <h1 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em;">
+            New Candidate Screening Workspace
+        </h1>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">
+            Recruiter Screening Dashboard &mdash; Configure technical job requirements and upload PDF resumes for automated NLP evaluation and ranking.
+        </p>
     </div>
-    <div class="dashboard-quick-actions">
-        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="fillSampleJobData()">
-            <i class="fa-solid fa-file-pen"></i> Auto-fill Sample Job
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="autoFillSampleJob()">
+            <i data-lucide="file-text" style="width: 15px; height: 15px; color: var(--primary);"></i>
+            <span>Fill Sample Job Spec</span>
         </button>
-        <button type="button" class="btn btn-outline-primary btn-sm" onclick="triggerSampleDemo()">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> 1-Click Full Demo
+        <button type="button" class="btn btn-primary btn-sm btn-run-demo">
+            <i data-lucide="zap" style="width: 15px; height: 15px;"></i>
+            <span>1-Click Sample Demo</span>
         </button>
     </div>
 </div>
 
-<form action="{{ url_for('screen_resumes') }}" method="POST" enctype="multipart/form-data" id="screeningForm" onsubmit="return handleFormSubmit(event)">
-    <div class="screening-grid">
-        <!-- Left Column: Job Description Setup -->
-        <div class="card jd-card">
+<form action="{{ url_for('screen_resumes') }}" method="POST" enctype="multipart/form-data" id="screeningForm">
+    <div class="screening-wizard-grid">
+        <!-- Left: Step 1 - Job Specifications -->
+        <div class="card">
             <div class="card-header">
-                <div class="card-title-group">
-                    <div class="card-icon icon-blue"><i class="fa-solid fa-briefcase"></i></div>
-                    <div>
-                        <h3 class="card-title">1. Job Requirements</h3>
-                        <p class="card-subtitle">Define position details & target skill requirements</p>
-                    </div>
+                <div>
+                    <h3 class="card-title">
+                        <i data-lucide="briefcase" style="width: 18px; height: 18px; color: var(--primary);"></i>
+                        <span>Step 1 &bull; Job Profile &amp; Requirements</span>
+                    </h3>
+                    <p class="card-subtitle">Target role criteria parsed by the NLP keyword and entity extraction engine</p>
                 </div>
+                <span class="badge-pill" style="background: var(--primary-light); color: var(--primary); border-color: var(--primary-border);">
+                    NLP Analyzed
+                </span>
             </div>
 
             <div class="card-body">
                 <div class="form-group">
-                    <label for="job_title" class="form-label">Job Title / Role <span class="text-danger">*</span></label>
-                    <input type="text" id="job_title" name="job_title" class="form-control" placeholder="e.g. Senior Python & AI Developer" required value="{{ sample_title }}">
+                    <label for="jobTitle" class="form-label">
+                        <span>Position Title</span>
+                        <span class="form-hint">e.g. Senior Python &amp; Machine Learning Engineer</span>
+                    </label>
+                    <input type="text" id="jobTitle" name="job_title" class="form-control" placeholder="Enter job role..." required value="{{ sample_title }}">
                 </div>
 
                 <div class="form-group">
-                    <label for="job_description" class="form-label">Job Description & Qualifications <span class="text-danger">*</span></label>
-                    <textarea id="job_description" name="job_description" class="form-control" rows="12" placeholder="Paste the job requirements, necessary skills (Python, SQL, ML, Docker), required experience (3+ years), and education criteria..." required>{{ sample_jd }}</textarea>
-                    <small class="form-hint">Tip: The NLP engine automatically detects required skills, experience thresholds, and education benchmarks from this text.</small>
+                    <label for="jobDescription" class="form-label">
+                        <span>Job Description &amp; Technical Requirements</span>
+                        <span class="form-hint">Minimum 20 characters required</span>
+                    </label>
+                    <textarea id="jobDescription" name="job_description" class="form-control" rows="11" placeholder="Specify required technical skills (Python, SQL, Machine Learning, Docker), required years of experience, and degree expectations..." required>{{ sample_jd }}</textarea>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; display: flex; align-items: center; gap: 4px;">
+                        <i data-lucide="info" style="width: 13px; height: 13px; color: var(--primary);"></i>
+                        <span>The NLP engine automatically discovers skill tags, required experience thresholds, and degree levels from this text.</span>
+                    </p>
+                </div>
+
+                <!-- 4-Factor Scoring Weights Breakdown -->
+                <div class="scoring-weights-panel">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="sliders" style="width: 14px; height: 14px; color: var(--primary);"></i>
+                            Algorithmic Match Weight Breakdown (100% Total)
+                        </span>
+                        <span class="badge-pill" style="background: #ffffff; color: var(--emerald); font-weight: 700;">Deterministic</span>
+                    </div>
+
+                    <div class="weight-row">
+                        <span class="weight-label">1. Technical Skill Alignment (Taxonomy overlap)</span>
+                        <span class="weight-val" style="color: var(--primary);">50%</span>
+                    </div>
+                    <div class="weight-row">
+                        <span class="weight-label">2. Experience Qualification (Years vs threshold)</span>
+                        <span class="weight-val" style="color: var(--cobalt);">20%</span>
+                    </div>
+                    <div class="weight-row">
+                        <span class="weight-label">3. Semantic TF-IDF Similarity (Cosine vector space)</span>
+                        <span class="weight-val" style="color: var(--violet);">20%</span>
+                    </div>
+                    <div class="weight-row" style="border-bottom: none;">
+                        <span class="weight-label">4. Academic Degree Level (B.Tech / M.Tech / PhD)</span>
+                        <span class="weight-val" style="color: var(--emerald);">10%</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column: Resume Upload Dropzone -->
-        <div class="card upload-card">
-            <div class="card-header">
-                <div class="card-title-group">
-                    <div class="card-icon icon-purple"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+        <!-- Right: Step 2 & 3 - Resume Upload & Execution -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="card">
+                <div class="card-header">
                     <div>
-                        <h3 class="card-title">2. Upload Resumes</h3>
-                        <p class="card-subtitle">Select multiple PDF format resumes for batch processing</p>
+                        <h3 class="card-title">
+                            <i data-lucide="upload-cloud" style="width: 18px; height: 18px; color: var(--primary);"></i>
+                            <span>Step 2 &bull; Upload Candidate PDF Resumes</span>
+                        </h3>
+                        <p class="card-subtitle">Batch process single or multiple PDF documents</p>
                     </div>
+                    <span id="fileCountBadge" class="badge-pill">0 files</span>
                 </div>
-            </div>
 
-            <div class="card-body">
-                <!-- Drag and Drop Dropzone -->
-                <div class="dropzone" id="dropzone" onclick="document.getElementById('resumesInput').click()">
-                    <input type="file" id="resumesInput" name="resumes" multiple accept=".pdf" style="display: none;" onchange="handleFileSelect(this.files)">
-                    <div class="dropzone-icon">
-                        <i class="fa-solid fa-file-arrow-up"></i>
+                <div class="card-body">
+                    <!-- Dropzone -->
+                    <div class="dropzone-container" id="dropzone" onclick="document.getElementById('resumesInput').click()">
+                        <input type="file" id="resumesInput" name="resumes" multiple accept=".pdf" style="display: none;">
+                        <div class="dropzone-icon-box">
+                            <i data-lucide="upload" style="width: 24px; height: 24px;"></i>
+                        </div>
+                        <h4 class="dropzone-title">Drag &amp; drop PDF resumes here</h4>
+                        <p class="dropzone-sub">
+                            or <span style="color: var(--primary); font-weight: 600; text-decoration: underline;">browse files</span> from your computer
+                        </p>
+                        <div class="dropzone-badges">
+                            <span class="badge-pill">PDF Format Only</span>
+                            <span class="badge-pill">Max 16 MB Batch</span>
+                            <span class="badge-pill">Multiple Files</span>
+                        </div>
                     </div>
-                    <h4>Drag & Drop PDF Resumes Here</h4>
-                    <p>or <span class="text-primary font-semibold">Browse Files</span> from your computer</p>
-                    <span class="file-limits">Supported format: PDF only (Up to 16 MB total)</span>
-                </div>
 
-                <!-- Selected Files List -->
-                <div id="fileListContainer" class="selected-files-list" style="display: none;">
-                    <div class="files-list-header">
-                        <span id="fileCountBadge" class="badge badge-primary">0 files selected</span>
-                        <button type="button" class="btn btn-ghost btn-xs text-danger" onclick="clearSelectedFiles()">Clear All</button>
+                    <!-- Selected Files Queue -->
+                    <div id="fileQueueWrap" style="display: none;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; margin-top: 16px;">
+                            <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted);">
+                                Queued for Processing
+                            </span>
+                        </div>
+                        <div id="fileQueueList" class="file-queue-wrap"></div>
                     </div>
-                    <div id="fileItemsList" class="file-items-scroll"></div>
-                </div>
 
-                <!-- Action Button -->
-                <div class="upload-action-area">
-                    <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitBtn">
-                        <i class="fa-solid fa-bolt"></i> Start AI Resume Screening
-                    </button>
-                </div>
+                    <!-- Step 3: Submit Action -->
+                    <div style="margin-top: 24px;">
+                        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; justify-content: center;" id="analyzeSubmitBtn">
+                            <i data-lucide="play" style="width: 18px; height: 18px;"></i>
+                            <span>Analyze Resumes &amp; Generate Leaderboard</span>
+                        </button>
+                    </div>
 
-                <!-- Demo Note -->
-                <div class="demo-callout">
-                    <div class="callout-icon"><i class="fa-solid fa-lightbulb"></i></div>
-                    <div class="callout-text">
-                        <strong>College Demonstration Tip:</strong>
-                        If you don't have sample PDF resumes ready on this computer, click the <strong>"1-Click Demo"</strong> button at the top right to instantly generate 5 realistic candidate resumes and rank them!
+                    <!-- Helpful Notice -->
+                    <div style="margin-top: 16px; padding: 12px; background: var(--bg-muted); border-radius: var(--radius-md); display: flex; gap: 10px; align-items: flex-start;">
+                        <i data-lucide="lightbulb" style="width: 16px; height: 16px; color: var(--amber); flex-shrink: 0; margin-top: 2px;"></i>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.45;">
+                            <strong>No local resume PDFs handy?</strong> Click <strong>"1-Click Sample Demo"</strong> at the top to automatically generate 5 realistic candidate resumes spanning various skillsets and rank them immediately.
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </form>
+
+<script>
+function autoFillSampleJob() {
+    const title = document.getElementById('jobTitle');
+    const desc = document.getElementById('jobDescription');
+    if (title) title.value = {{ sample_title|tojson }};
+    if (desc) desc.value = {{ sample_jd|tojson }};
+    if (window.showToast) {
+        showToast("Sample job description and role pre-filled.", "info");
+    }
+}
+</script>
 {% endblock %}

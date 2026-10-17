@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+
+{% block title %}Engine Methodology & Algorithmic Foundations | ResumeAI{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="workspace-header mb-4">
+    <div>
+        <div class="flex items-center gap-2 mb-1">
+            <span class="badge badge-primary text-xs font-mono uppercase tracking-wider">Technical Whitepaper</span>
+            <span class="text-xs text-muted">v2.4 Production Engine</span>
+        </div>
+        <h1 class="page-title">Algorithmic Architecture & NLP Pipeline</h1>
+        <p class="page-subtitle">A comprehensive breakdown of the parsing heuristics, NLP similarity models, multi-factor weighting, and custom Data Structures & Algorithms powering ResumeAI.</p>
+    </div>
+    <div class="workspace-actions">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+            <i data-lucide="sliders" class="icon-sm"></i>
+            <span>Screen Resumes</span>
+        </a>
+        <button type="button" class="btn btn-secondary" onclick="triggerSampleDemo()">
+            <i data-lucide="sparkles" class="icon-sm text-primary"></i>
+            <span>Run Sample Demo</span>
+        </button>
+    </div>
+</div>
+
+<!-- Architecture Pipeline Summary Card -->
+<div class="card p-4 mb-4">
+    <div class="card-header pb-3 border-b mb-3">
+        <h3 class="card-title text-base flex items-center gap-2">
+            <i data-lucide="git-merge" class="icon-sm text-primary"></i>
+            End-to-End Resume Screening Pipeline
+        </h3>
+        <p class="card-subtitle text-xs">Deterministic 4-phase transformation from raw PDF byte streams to ranked recruiter leaderboards</p>
+    </div>
+    <div class="pipeline-grid">
+        <div class="pipeline-node">
+            <div class="node-badge">01</div>
+            <div class="node-icon bg-primary-light text-primary">
+                <i data-lucide="file-text" class="icon-sm"></i>
+            </div>
+            <h4 class="node-title">PDF Ingestion</h4>
+            <p class="node-desc">pypdf stream extraction, text normalization, regex entity recognition (email, phone, degree).</p>
+        </div>
+        <div class="pipeline-node">
+            <div class="node-badge">02</div>
+            <div class="node-icon bg-violet-light text-violet">
+                <i data-lucide="layers" class="icon-sm"></i>
+            </div>
+            <h4 class="node-title">NLP & Taxonomy</h4>
+            <p class="node-desc">Stopword filtration, skill keyword taxonomy lookup, and Set Theory gap analysis (A ∩ B).</p>
+        </div>
+        <div class="pipeline-node">
+            <div class="node-badge">03</div>
+            <div class="node-icon bg-amber-light text-amber">
+                <i data-lucide="cpu" class="icon-sm"></i>
+            </div>
+            <h4 class="node-title">Vector TF-IDF</h4>
+            <p class="node-desc">Sublinear TF-IDF vectorization and cosine similarity measurement against job description.</p>
+        </div>
+        <div class="pipeline-node">
+            <div class="node-badge">04</div>
+            <div class="node-icon bg-emerald-light text-emerald">
+                <i data-lucide="binary" class="icon-sm"></i>
+            </div>
+            <h4 class="node-title">DSA Ranking</h4>
+            <p class="node-desc">O(N log N) Merge Sort for deterministic ranking and Max-Heap priority queue for Top-K retrieval.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Technical Sections Grid -->
+<div class="candidate-detail-layout">
+    <!-- Left Column: Detailed Technical Deep Dives -->
+    <div class="candidate-content-primary">
+
+        <!-- 1. PDF Parsing & Entity Extraction -->
+        <div class="card mb-4">
+            <div class="card-header border-b">
+                <div class="card-title-group">
+                    <div class="metric-icon-wrap bg-primary-light text-primary">
+                        <i data-lucide="file-code" class="icon-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="card-title text-base">1. Document Parsing & Entity Extraction</h3>
+                        <p class="card-subtitle text-xs">Module: <code class="text-primary">resume_parser.py</code></p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="text-sm text-slate-700 leading-relaxed mb-3">
+                    Uploaded resumes are parsed directly from memory or disk using <strong>pypdf</strong>. The parser cleans artifact headers, normalizes Unicode whitespace, and runs targeted regular expressions and heuristic pattern matchers:
+                </p>
+                <div class="tech-spec-grid mb-3">
+                    <div class="spec-card">
+                        <div class="spec-title"><i data-lucide="mail" class="icon-xs text-primary"></i> Email Extraction</div>
+                        <div class="spec-body font-mono text-xs">r'[\w\.-]+@[\w\.-]+\.\w+'</div>
+                    </div>
+                    <div class="spec-card">
+                        <div class="spec-title"><i data-lucide="phone" class="icon-xs text-emerald"></i> Phone Extraction</div>
+                        <div class="spec-body font-mono text-xs">r'(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}'</div>
+                    </div>
+                    <div class="spec-card">
+                        <div class="spec-title"><i data-lucide="briefcase" class="icon-xs text-violet"></i> Experience Detection</div>
+                        <div class="spec-body font-mono text-xs">r'(\d+(?:\.\d+)?)\s*\+?\s*(?:years?|yrs?)\b'</div>
+                    </div>
+                    <div class="spec-card">
+                        <div class="spec-title"><i data-lucide="graduation-cap" class="icon-xs text-amber"></i> Education Parsing</div>
+                        <div class="spec-body text-xs">Heuristic hierarchy: Ph.D. &gt; Master's &gt; Bachelor's &gt; Associate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. NLP, Tokenization & Set Theory -->
+        <div class="card mb-4">
+            <div class="card-header border-b">
+                <div class="card-title-group">
+                    <div class="metric-icon-wrap bg-violet-light text-violet">
+                        <i data-lucide="code-2" class="icon-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="card-title text-base">2. NLP Tokenization & Set Theory Skills Gap</h3>
+                        <p class="card-subtitle text-xs">Module: <code class="text-violet">nlp_processor.py</code></p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="text-sm text-slate-700 leading-relaxed mb-3">
+                    The NLP engine standardizes the resume text by stripping punctuation, applying case normalization, and filtering out 150+ high-frequency English stopwords. Candidate competencies are cross-referenced with a comprehensive technical taxonomy spanning Programming, Web Frameworks, Cloud, Databases, and ML libraries.
+                </p>
+                <div class="p-3 bg-slate-50 border rounded mb-3">
+                    <div class="font-bold text-xs uppercase text-slate-600 mb-2">Formal Set Theory Formulation:</div>
+                    <div class="flex flex-col gap-2 text-xs font-mono text-slate-800">
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-strong">Matched Skills</span>
+                            <span>\( S_{\text{matched}} = S_{\text{resume}} \cap S_{\text{job}} \)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-low">Missing Skills</span>
+                            <span>\( S_{\text{missing}} = S_{\text{job}} \setminus S_{\text{resume}} \)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-neutral">Bonus Skills</span>
+                            <span>\( S_{\text{bonus}} = S_{\text{resume}} \setminus S_{\text{job}} \)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. TF-IDF Vectorization & Cosine Similarity -->
+        <div class="card mb-4">
+            <div class="card-header border-b">
+                <div class="card-title-group">
+                    <div class="metric-icon-wrap bg-amber-light text-amber">
+                        <i data-lucide="sigma" class="icon-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="card-title text-base">3. Semantic TF-IDF & Cosine Similarity</h3>
+                        <p class="card-subtitle text-xs">Vector Space Model Representation</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="text-sm text-slate-700 leading-relaxed mb-3">
+                    Beyond exact keyword matching, semantic contextual overlap is quantified using a Vector Space Model. We compute Term Frequency (TF) with sublinear logarithmic scaling and Inverse Document Frequency (IDF) over the candidate corpus:
+                </p>
+                <div class="p-3 bg-slate-900 text-slate-100 rounded font-mono text-xs leading-relaxed mb-3 overflow-x-auto">
+                    <div class="text-emerald font-semibold mb-1">// Cosine Similarity Equation</div>
+                    <div>CosineSim(d_resume, d_job) = ( u &bull; v ) / ( ||u||_2 * ||v||_2 )</div>
+                    <div class="text-slate-400 mt-1">// Sublinear TF Formulation</div>
+                    <div>tf(t, d) = 1 + log(count(t, d)) if count(t, d) &gt; 0 else 0</div>
+                </div>
+                <p class="text-xs text-muted">
+                    This captures holistic job context (e.g. distributed systems concepts, leadership terminology, agile workflow mentions) even when specific acronyms vary.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right Column: Multi-Factor Scoring & DSA Complexity Matrix -->
+    <div class="candidate-content-sidebar">
+
+        <!-- 4-Factor Weighted Model -->
+        <div class="card mb-4">
+            <div class="card-header border-b">
+                <h3 class="card-title text-base flex items-center gap-2">
+                    <i data-lucide="scale" class="icon-sm text-primary"></i>
+                    Multi-Factor Scoring Model
+                </h3>
+            </div>
+            <div class="card-body">
+                <p class="text-xs text-slate-600 mb-3">
+                    Final candidate scores are synthesized using a normalized 4-factor multi-criteria weighted equation:
+                </p>
+                <div class="p-3 bg-slate-900 text-slate-100 rounded font-mono text-xs mb-3">
+                    Score = (0.50 &times; Skills) +<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(0.20 &times; Experience) +<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(0.20 &times; TF-IDF) +<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(0.10 &times; Education)
+                </div>
+                <div class="factor-breakdown-list text-xs">
+                    <div class="flex justify-between py-1 border-b">
+                        <span class="font-semibold text-slate-700">Skill Competencies</span>
+                        <span class="text-primary font-bold">50% Weight</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b">
+                        <span class="font-semibold text-slate-700">Relevant Experience</span>
+                        <span class="text-violet font-bold">20% Weight</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b">
+                        <span class="font-semibold text-slate-700">Semantic TF-IDF</span>
+                        <span class="text-amber font-bold">20% Weight</span>
+                    </div>
+                    <div class="flex justify-between py-1">
+                        <span class="font-semibold text-slate-700">Education Degree</span>
+                        <span class="text-emerald font-bold">10% Weight</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DSA Complexity Matrix Card -->
+        <div class="card mb-4">
+            <div class="card-header border-b">
+                <h3 class="card-title text-base flex items-center gap-2">
+                    <i data-lucide="binary" class="icon-sm text-emerald"></i>
+                    Data Structures & Complexity
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="data-table text-xs">
+                        <thead>
+                            <tr>
+                                <th>Algorithm / Structure</th>
+                                <th>Time</th>
+                                <th>Space</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="font-bold text-slate-800">Merge Sort</div>
+                                    <span class="text-muted text-2xs">Stable Leaderboard</span>
+                                </td>
+                                <td><span class="badge badge-strong font-mono">O(N log N)</span></td>
+                                <td><span class="badge badge-neutral font-mono">O(N)</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="font-bold text-slate-800">Candidate Max-Heap</div>
+                                    <span class="text-muted text-2xs">Top-K Candidate Retrieval</span>
+                                </td>
+                                <td><span class="badge badge-strong font-mono">O(K log N)</span></td>
+                                <td><span class="badge badge-neutral font-mono">O(N)</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="font-bold text-slate-800">Inverted Skill Index</div>
+                                    <span class="text-muted text-2xs">Hash Map Skill Queries</span>
+                                </td>
+                                <td><span class="badge badge-strong font-mono">O(1)</span></td>
+                                <td><span class="badge badge-neutral font-mono">O(V)</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="font-bold text-slate-800">Binary Search</div>
+                                    <span class="text-muted text-2xs">Alphabetical Lookup</span>
+                                </td>
+                                <td><span class="badge badge-strong font-mono">O(log N)</span></td>
+                                <td><span class="badge badge-neutral font-mono">O(1)</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Academic & Production Verification -->
+        <div class="card p-3 bg-slate-50 border">
+            <div class="flex items-start gap-2">
+                <i data-lucide="shield-check" class="icon-sm text-emerald mt-0.5"></i>
+                <div>
+                    <h5 class="text-xs font-bold text-slate-800">Production Verified</h5>
+                    <p class="text-xs text-slate-600 leading-normal mt-0.5">
+                        Algorithms are natively implemented in <code class="text-primary">algorithms.py</code> without black-box third-party sorting wrappers, ensuring full academic rigor and auditable rankings.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

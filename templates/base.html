@@ -3,96 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}AI Based Resume Screening System{% endblock %}</title>
-    <!-- Google Fonts -->
+    <title>{% block title %}ResumeAI - Enterprise AI-Powered Resume Screening & Ranking Platform{% endblock %}</title>
+    <meta name="description" content="Commercial-grade AI resume screening system with PDF entity parsing, TF-IDF semantic vector matching, and deterministic Merge Sort candidate ranking.">
+    
+    <!-- Google Modern Typography: Inter & Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Design System Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=3.0">
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <header class="navbar">
-        <div class="nav-container">
-            <a href="{{ url_for('index') }}" class="brand-logo">
-                <div class="logo-icon"><i class="fa-solid fa-brain"></i></div>
-                <div class="logo-text">
-                    <span class="logo-title">ResumeAI</span>
-                    <span class="logo-sub">Screening System</span>
-                </div>
-            </a>
+    <div class="app-container">
+        <!-- Sidebar Backdrop for Mobile -->
+        <div id="sidebarOverlay" class="modal-overlay"></div>
 
-            <nav class="nav-menu">
-                <a href="{{ url_for('index') }}" class="nav-link"><i class="fa-solid fa-house"></i> Home</a>
-                <a href="{{ url_for('dashboard') }}" class="nav-link"><i class="fa-solid fa-sliders"></i> Screener</a>
-                <a href="{{ url_for('history') }}" class="nav-link"><i class="fa-solid fa-clock-rotate-left"></i> History</a>
-                
-                <div class="nav-actions">
-                    <button class="btn btn-outline-primary btn-sm" id="loadSampleBtn" onclick="triggerSampleDemo()">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> 1-Click Demo
-                    </button>
-                    <button class="btn btn-ghost btn-sm text-danger" title="Reset Database" onclick="confirmClearData()">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                </div>
-            </nav>
-        </div>
-    </header>
-
-    <!-- Global Toast / Alerts -->
-    <main class="main-content">
-        <div class="container">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="flash-messages">
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
-                                <i class="fa-solid {% if category == 'success' %}fa-circle-check{% else %}fa-triangle-exclamation{% endif %}"></i>
-                                <span>{{ message }}</span>
-                                <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
-                            </div>
-                        {% endfor %}
+        <!-- 1. Collapsible Enterprise Sidebar -->
+        <aside id="appSidebar" class="app-sidebar">
+            <!-- Sidebar Header -->
+            <div class="sidebar-header">
+                <a href="{{ url_for('index') }}" class="logo-wrap">
+                    <div class="logo-icon-box">
+                        <i data-lucide="brain"></i>
                     </div>
-                {% endif %}
-            {% endwith %}
+                    <div class="logo-text">
+                        <div class="logo-title">
+                            Resume<span>AI</span>
+                            <span class="logo-tag">PRO</span>
+                        </div>
+                        <div class="logo-subtitle">AI Based Screening</div>
+                    </div>
+                </a>
+                <button type="button" id="sidebarCollapseBtn" class="sidebar-collapse-btn" title="Toggle Sidebar">
+                    <i data-lucide="panel-left-close"></i>
+                </button>
+            </div>
 
-            {% block content %}{% endblock %}
-        </div>
-    </main>
-
-    <!-- Project Footer -->
-    <footer class="footer">
-        <div class="container footer-container">
-            <div class="footer-left">
-                <div class="footer-brand">
-                    <i class="fa-solid fa-brain"></i> AI Based Resume Screening System
+            <!-- Sidebar Navigation Links -->
+            <div class="sidebar-body">
+                <div>
+                    <div class="sidebar-section-title">Navigation</div>
+                    <ul class="nav-list">
+                        <li>
+                            <a href="{{ url_for('index') }}" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+                                <i data-lucide="layout-dashboard"></i>
+                                <span class="nav-item-label">Overview</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                                <i data-lucide="plus-circle"></i>
+                                <span class="nav-item-label">New Screening</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% if global_latest_job_id %}{{ url_for('view_results', job_id=global_latest_job_id) }}{% else %}{{ url_for('dashboard') }}{% endif %}" class="nav-item {% if request.endpoint == 'view_results' %}active{% endif %}">
+                                <i data-lucide="trophy"></i>
+                                <span class="nav-item-label">Rankings</span>
+                                {% if global_latest_job_id %}
+                                    <span class="nav-badge">Live</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('history') }}" class="nav-item {% if request.endpoint == 'history' %}active{% endif %}">
+                                <i data-lucide="history"></i>
+                                <span class="nav-item-label">Session History</span>
+                                <span class="nav-badge">{{ global_total_screenings }}</span>
+                            </a>
+                        </li>
+                    </ul>
                 </div>
-                <p class="footer-desc">
-                    An intelligent recruitment assistant demonstrating Natural Language Processing, TF-IDF Vectorization, and Core Data Structures & Algorithms.
-                </p>
-            </div>
-            <div class="footer-tags">
-                <span class="tech-tag"><i class="fa-brands fa-python"></i> Python 3</span>
-                <span class="tech-tag"><i class="fa-solid fa-server"></i> Flask</span>
-                <span class="tech-tag"><i class="fa-solid fa-code-merge"></i> Merge Sort & Heap</span>
-                <span class="tech-tag"><i class="fa-solid fa-database"></i> SQLite</span>
-            </div>
-        </div>
-    </footer>
 
-    <!-- Loading Modal Overlay -->
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-        <div class="loading-card">
-            <div class="spinner"></div>
-            <h3 id="loadingTitle">Processing Resumes...</h3>
-            <p id="loadingSubtitle">Extracting text, computing TF-IDF similarity, and ranking candidates with Merge Sort.</p>
+                <div>
+                    <div class="sidebar-section-title">Intelligence & Architecture</div>
+                    <ul class="nav-list">
+                        <li>
+                            <a href="{{ url_for('methodology') }}" class="nav-item {% if request.endpoint == 'methodology' %}active{% endif %}">
+                                <i data-lucide="cpu"></i>
+                                <span class="nav-item-label">Engine Architecture</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 1-Click Demo CTA Box -->
+                <div class="sidebar-cta-box">
+                    <div class="sidebar-cta-title">
+                        <i data-lucide="sparkles" style="color: #818cf8; width: 16px; height: 16px;"></i>
+                        <span>1-Click Sample Demo</span>
+                    </div>
+                    <p class="sidebar-cta-desc">
+                        Generate 5 realistic candidate resumes and test automated NLP screening & Merge Sort ranking instantly.
+                    </p>
+                    <button type="button" class="sidebar-demo-btn btn-run-demo">
+                        <i data-lucide="zap" style="width: 15px; height: 15px;"></i>
+                        <span>Run Sample Evaluation</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <div class="sidebar-engine-status">
+                    <span class="status-indicator"></span>
+                    <span class="sidebar-footer-text">NLP Engine Ready</span>
+                </div>
+                <span class="sidebar-version">v2.4.0</span>
+            </div>
+        </aside>
+
+        <!-- 2. Main Application Workspace -->
+        <div class="app-main">
+            <!-- Top Toolbar -->
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <button type="button" id="mobileMenuToggle" class="mobile-menu-toggle" aria-label="Open navigation menu">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <nav class="topbar-breadcrumbs" aria-label="Breadcrumb">
+                        <a href="{{ url_for('index') }}" class="breadcrumb-root">Workspace</a>
+                        <span class="breadcrumb-sep">/</span>
+                        <span class="breadcrumb-active">{% block breadcrumb %}Overview{% endblock %}</span>
+                    </nav>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="engine-badge-pill">
+                        <span class="engine-badge-dot"></span>
+                        <span>Deterministic TF-IDF & Merge Sort</span>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm btn-run-demo">
+                        <i data-lucide="sparkles" style="width: 15px; height: 15px; color: var(--primary);"></i>
+                        <span>Sample Demo</span>
+                    </button>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-sm">
+                        <i data-lucide="plus" style="width: 15px; height: 15px;"></i>
+                        <span>New Screening</span>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Main Page Content -->
+            <main class="app-content">
+                <!-- Flash Notification Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-container">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i data-lucide="{{ 'alert-circle' if category == 'error' else 'check-circle-2' }}" style="width: 18px; height: 18px;"></i>
+                                        <span>{{ message }}</span>
+                                    </div>
+                                    <button type="button" onclick="this.parentElement.remove()" style="color: inherit; opacity: 0.7;">
+                                        <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                                    </button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </main>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="{{ url_for('static', filename='js/script.js') }}?v=2.0"></script>
+    <!-- 3. Global Confirmation Modal -->
+    <div id="confirmModal" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h4 id="confirmModalTitle" class="modal-title">Confirm Action</h4>
+                <button type="button" onclick="closeConfirmModal()" style="color: var(--text-muted);">
+                    <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
+            <div id="confirmModalMessage" class="modal-body">
+                Are you sure you want to proceed with this action?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeConfirmModal()">Cancel</button>
+                <button type="button" id="confirmModalSubmitBtn" class="btn btn-primary btn-sm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Global Processing / Loading Modal -->
+    <div id="loadingOverlay" class="modal-overlay" style="display: none;">
+        <div class="loading-card">
+            <div class="custom-spinner"></div>
+            <h3 id="loadingTitle" style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; color: var(--text-primary);">
+                Analyzing Resumes...
+            </h3>
+            <p id="loadingSubtitle" style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.45;">
+                Extracting PDF text, computing TF-IDF similarity vectors, and executing Merge Sort ranking.
+            </p>
+        </div>
+    </div>
+
+    <!-- Client Scripts -->
+    <script src="{{ url_for('static', filename='js/script.js') }}?v=3.0"></script>
 </body>
 </html>

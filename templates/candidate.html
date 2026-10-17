@@ -1,255 +1,393 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ candidate.name }} - Candidate Match Report{% endblock %}
+{% block title %}{{ candidate.name }} - Candidate Intelligence Profile | ResumeAI{% endblock %}
 
 {% block content %}
-<!-- Back Breadcrumb Bar -->
-<div class="breadcrumb-bar">
-    <a href="{{ url_for('view_results', job_id=job.id) }}" class="breadcrumb-back">
-        <i class="fa-solid fa-arrow-left"></i> Back to Leaderboard
+<!-- Breadcrumb Header -->
+<div class="breadcrumb-nav">
+    <a href="{{ url_for('view_results', job_id=job.id) }}" class="breadcrumb-link">
+        <i data-lucide="arrow-left" class="icon-sm"></i>
+        <span>Back to Candidate Rankings</span>
     </a>
-    <span class="breadcrumb-separator">/</span>
-    <span class="breadcrumb-current">{{ candidate.name }} (Rank #{{ candidate.rank }})</span>
+    <i data-lucide="chevron-right" class="icon-xs breadcrumb-sep"></i>
+    <span class="breadcrumb-item text-muted">{{ job.job_title }}</span>
+    <i data-lucide="chevron-right" class="icon-xs breadcrumb-sep"></i>
+    <span class="breadcrumb-item font-semibold text-slate-800">{{ candidate.name }}</span>
 </div>
 
-<!-- Candidate Profile Header Card -->
-<div class="card candidate-hero-card">
-    <div class="candidate-hero-flex">
+<!-- Candidate Hero Profile Header -->
+<div class="card p-4 candidate-profile-hero mb-4">
+    <div class="candidate-hero-grid">
         <div class="candidate-hero-left">
-            <div class="hero-avatar">
-                {{ candidate.name[:2]|upper if candidate.name != 'Not Available' else 'NA' }}
+            <div class="candidate-avatar-large">
+                {{ candidate.name[:2]|upper if candidate.name and candidate.name != 'Not Available' else 'CA' }}
             </div>
-            <div>
-                <div class="candidate-hero-title-row">
-                    <h1 class="candidate-hero-name">{{ candidate.name }}</h1>
-                    <span class="rank-pill"><i class="fa-solid fa-trophy"></i> Rank #{{ candidate.rank }} of {{ candidate.total_pool }}</span>
+            <div class="candidate-hero-meta">
+                <div class="candidate-name-row">
+                    <h1 class="candidate-name">{{ candidate.name }}</h1>
+                    <span class="rank-badge rank-badge-pill">
+                        <i data-lucide="trophy" class="icon-xs"></i>
+                        Rank #{{ candidate.rank }} of {{ candidate.total_pool }}
+                    </span>
+                    <span class="badge {% if candidate.badge_class == 'badge-strong' %}badge-strong{% elif candidate.badge_class == 'badge-moderate' %}badge-moderate{% else %}badge-low{% endif %}">
+                        {{ candidate.badge }}
+                    </span>
                 </div>
-                <div class="candidate-contact-chips">
-                    <span class="contact-chip"><i class="fa-regular fa-envelope"></i> {{ candidate.email }}</span>
-                    <span class="contact-chip"><i class="fa-solid fa-phone"></i> {{ candidate.phone }}</span>
-                    <span class="contact-chip"><i class="fa-solid fa-file-pdf"></i> {{ candidate.resume_filename }}</span>
+                
+                <div class="candidate-contact-row">
+                    <span class="contact-item">
+                        <i data-lucide="mail" class="icon-xs text-muted"></i>
+                        <span>{{ candidate.email }}</span>
+                    </span>
+                    <span class="contact-item">
+                        <i data-lucide="phone" class="icon-xs text-muted"></i>
+                        <span>{{ candidate.phone }}</span>
+                    </span>
+                    <span class="contact-item">
+                        <i data-lucide="file-text" class="icon-xs text-muted"></i>
+                        <span>{{ candidate.resume_filename }}</span>
+                    </span>
+                    <span class="contact-item">
+                        <i data-lucide="briefcase" class="icon-xs text-muted"></i>
+                        <span>{{ candidate.experience_years|format_exp }} yrs detected</span>
+                    </span>
                 </div>
             </div>
         </div>
 
         <div class="candidate-hero-right">
-            <div class="hero-score-box">
-                <span class="hero-score-val">{{ candidate.match_score }}%</span>
-                <span class="badge {{ candidate.badge_class }}">{{ candidate.badge }}</span>
-                <span class="hero-score-lbl">Overall Match Score</span>
+            <div class="hero-score-meter-card">
+                <div class="hero-score-header">
+                    <span class="text-xs uppercase font-semibold text-muted tracking-wide">Overall Match Score</span>
+                    <span class="hero-score-number {% if candidate.match_score >= 70 %}text-emerald{% elif candidate.match_score >= 45 %}text-amber{% else %}text-danger{% endif %}">
+                        {{ candidate.match_score }}%
+                    </span>
+                </div>
+                <div class="score-meter-track mt-2">
+                    <div class="score-meter-fill {% if candidate.match_score >= 70 %}bg-emerald{% elif candidate.match_score >= 45 %}bg-amber{% else %}bg-danger{% endif %}" style="width: {{ candidate.match_score }}%;"></div>
+                </div>
+                <div class="hero-score-meta mt-2">
+                    <span class="text-xs text-muted">Weighted algorithm calculation</span>
+                    <button type="button" class="btn btn-ghost btn-xs text-danger" onclick="confirmDeleteCandidate({{ candidate.id }}, '{{ candidate.name|replace("'", "\\'") }}')">
+                        <i data-lucide="trash-2" class="icon-xs"></i> Delete Record
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="candidate-grid">
-    <!-- Left Column: Explainability & Extracted Resume Sections -->
-    <div class="candidate-main-col">
-        <!-- 1. Explainability Card -->
-        <div class="card explainability-card">
-            <div class="card-header">
+<!-- Main 2-Column Intelligence Grid -->
+<div class="candidate-detail-layout">
+    <!-- Left Column: Explainability, Skills Gap Analysis & Extracted Information -->
+    <div class="candidate-content-primary">
+        
+        <!-- 1. AI / NLP Explainability Insight Card -->
+        <div class="card mb-4">
+            <div class="card-header border-b">
                 <div class="card-title-group">
-                    <div class="card-icon icon-green"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                    <div class="metric-icon-wrap bg-emerald-light text-emerald">
+                        <i data-lucide="sparkles" class="icon-sm"></i>
+                    </div>
                     <div>
-                        <h3 class="card-title">Why This Candidate Matched</h3>
-                        <p class="card-subtitle">AI / NLP explainability breakdown for recruiters</p>
+                        <h3 class="card-title text-base">Why This Candidate Matched</h3>
+                        <p class="card-subtitle text-xs">Deterministic AI & NLP explainability analysis for recruiters</p>
                     </div>
                 </div>
             </div>
             <div class="card-body">
                 {% if candidate.explanations %}
-                    <ul class="explanation-list">
+                    <div class="explanation-flow">
                         {% for exp in candidate.explanations %}
-                            <li class="explanation-item">
-                                <i class="fa-solid fa-circle-check text-emerald"></i>
-                                <span>{{ exp }}</span>
-                            </li>
+                            <div class="explanation-pill-item">
+                                <i data-lucide="check-circle-2" class="icon-sm text-emerald flex-shrink-0"></i>
+                                <span class="text-sm text-slate-700">{{ exp }}</span>
+                            </div>
                         {% endfor %}
-                    </ul>
+                    </div>
                 {% else %}
-                    <p class="text-muted">Standard matching criteria applied.</p>
+                    <p class="text-muted text-sm">Standard criteria applied based on extracted keywords and TF-IDF similarity.</p>
                 {% endif %}
             </div>
         </div>
 
-        <!-- 2. Skills Gap Analysis -->
-        <div class="card skills-analysis-card">
-            <div class="card-header">
+        <!-- 2. Set-Theory Skills Gap Analysis Card -->
+        <div class="card mb-4">
+            <div class="card-header border-b">
                 <div class="card-title-group">
-                    <div class="card-icon icon-blue"><i class="fa-solid fa-layer-group"></i></div>
+                    <div class="metric-icon-wrap bg-primary-light text-primary">
+                        <i data-lucide="layers" class="icon-sm"></i>
+                    </div>
                     <div>
-                        <h3 class="card-title">Skills Gap Analysis</h3>
-                        <p class="card-subtitle">Set theory comparison (Job Requirements vs Candidate Inventory)</p>
+                        <h3 class="card-title text-base">Skills Gap Analysis</h3>
+                        <p class="card-subtitle text-xs">Set theory evaluation: Candidate Detected Skills vs Job Required Inventory</p>
                     </div>
                 </div>
             </div>
             <div class="card-body">
                 <!-- Matched Skills -->
-                <div class="skill-category-group">
-                    <div class="category-header">
-                        <span class="text-emerald font-semibold"><i class="fa-solid fa-check"></i> Matched Skills ({{ candidate.matched_skills|length }})</span>
-                        <small class="text-muted">Directly satisfying Job Description requirements</small>
+                <div class="skill-analysis-block">
+                    <div class="skill-analysis-header">
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-strong"><i data-lucide="check" class="icon-xs"></i> Matched Required Skills</span>
+                            <span class="text-xs font-semibold text-emerald">({{ candidate.matched_skills|length }} verified)</span>
+                        </div>
+                        <span class="text-xs text-muted">Directly satisfying Job Description requirements</span>
                     </div>
-                    <div class="skill-chips-wrap">
+                    <div class="tag-cloud mt-2">
                         {% for s in candidate.matched_skills %}
-                            <span class="skill-chip skill-matched"><i class="fa-solid fa-check"></i> {{ s }}</span>
+                            <span class="pill-tag pill-tag-matched">
+                                <i data-lucide="check" class="icon-xs"></i> {{ s }}
+                            </span>
                         {% else %}
-                            <span class="text-muted text-sm">No direct required skills matched.</span>
+                            <span class="text-sm text-muted">No direct required skills matched.</span>
                         {% endfor %}
                     </div>
                 </div>
+
+                <div class="divider my-3"></div>
 
                 <!-- Missing Skills -->
-                <div class="skill-category-group">
-                    <div class="category-header">
-                        <span class="text-danger font-semibold"><i class="fa-solid fa-xmark"></i> Missing Skills ({{ candidate.missing_skills|length }})</span>
-                        <small class="text-muted">Required by Job Description but absent in resume</small>
+                <div class="skill-analysis-block">
+                    <div class="skill-analysis-header">
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-low"><i data-lucide="x" class="icon-xs"></i> Missing Required Skills</span>
+                            <span class="text-xs font-semibold text-danger">({{ candidate.missing_skills|length }} missing)</span>
+                        </div>
+                        <span class="text-xs text-muted">Required by role but absent in extracted resume text</span>
                     </div>
-                    <div class="skill-chips-wrap">
+                    <div class="tag-cloud mt-2">
                         {% for s in candidate.missing_skills %}
-                            <span class="skill-chip skill-missing"><i class="fa-solid fa-minus"></i> {{ s }}</span>
+                            <span class="pill-tag pill-tag-missing">
+                                <i data-lucide="minus" class="icon-xs"></i> {{ s }}
+                            </span>
                         {% else %}
-                            <span class="text-emerald text-sm font-semibold"><i class="fa-solid fa-circle-check"></i> Candidate meets 100% of required skills!</span>
+                            <span class="text-sm text-emerald font-semibold flex items-center gap-1.5">
+                                <i data-lucide="check-check" class="icon-sm"></i> Candidate satisfies 100% of required competencies!
+                            </span>
                         {% endfor %}
                     </div>
                 </div>
 
+                <div class="divider my-3"></div>
+
                 <!-- Additional Skills -->
-                <div class="skill-category-group">
-                    <div class="category-header">
-                        <span class="text-primary font-semibold"><i class="fa-solid fa-plus"></i> Additional / Bonus Skills ({{ candidate.additional_skills|length }})</span>
-                        <small class="text-muted">Extra candidate competencies detected</small>
+                <div class="skill-analysis-block">
+                    <div class="skill-analysis-header">
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-neutral"><i data-lucide="plus" class="icon-xs"></i> Additional / Bonus Competencies</span>
+                            <span class="text-xs font-semibold text-slate-600">({{ candidate.additional_skills|length }} detected)</span>
+                        </div>
+                        <span class="text-xs text-muted">Extra candidate skills detected outside required criteria</span>
                     </div>
-                    <div class="skill-chips-wrap">
+                    <div class="tag-cloud mt-2">
                         {% for s in candidate.additional_skills %}
-                            <span class="skill-chip skill-bonus">{{ s }}</span>
+                            <span class="pill-tag pill-tag-bonus">{{ s }}</span>
                         {% else %}
-                            <span class="text-muted text-sm">No additional skills detected.</span>
+                            <span class="text-sm text-muted">No additional skills identified.</span>
                         {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 3. Extracted Resume Content -->
-        <div class="card extracted-details-card">
-            <div class="card-header">
+        <!-- 3. Extracted Resume Content & Entities -->
+        <div class="card mb-4">
+            <div class="card-header border-b">
                 <div class="card-title-group">
-                    <div class="card-icon icon-purple"><i class="fa-solid fa-file-lines"></i></div>
+                    <div class="metric-icon-wrap bg-violet-light text-violet">
+                        <i data-lucide="file-check-2" class="icon-sm"></i>
+                    </div>
                     <div>
-                        <h3 class="card-title">Extracted Resume Information</h3>
-                        <p class="card-subtitle">Structured sections extracted via PDF parsing algorithms</p>
+                        <h3 class="card-title text-base">Extracted Candidate Profile Sections</h3>
+                        <p class="card-subtitle text-xs">Structured entities parsed from uploaded PDF document</p>
                     </div>
                 </div>
             </div>
             <div class="card-body">
-                <div class="extracted-section">
-                    <h4><i class="fa-solid fa-briefcase"></i> Work Experience</h4>
-                    <p class="extracted-text">{{ candidate.experience_years|format_exp }} Years Detected &bull; {{ candidate.education }}</p>
+                <div class="extracted-entity-grid mb-3">
+                    <div class="entity-box">
+                        <span class="entity-lbl"><i data-lucide="briefcase" class="icon-xs"></i> Work Experience</span>
+                        <span class="entity-val font-semibold">{{ candidate.experience_years|format_exp }} Years Detected</span>
+                    </div>
+                    <div class="entity-box">
+                        <span class="entity-lbl"><i data-lucide="graduation-cap" class="icon-xs"></i> Education Level</span>
+                        <span class="entity-val font-semibold">{{ candidate.education }}</span>
+                    </div>
                 </div>
 
-                {% if candidate.projects != 'Not Available' %}
-                    <div class="extracted-section">
-                        <h4><i class="fa-solid fa-code-fork"></i> Key Projects</h4>
-                        <div class="extracted-text whitespace-pre">{{ candidate.projects }}</div>
+                {% if candidate.projects and candidate.projects != 'Not Available' %}
+                    <div class="extracted-section mb-3">
+                        <h4 class="extracted-heading"><i data-lucide="code" class="icon-xs text-primary"></i> Key Projects</h4>
+                        <div class="extracted-text-box">{{ candidate.projects }}</div>
                     </div>
                 {% endif %}
 
-                {% if candidate.certifications != 'Not Available' %}
-                    <div class="extracted-section">
-                        <h4><i class="fa-solid fa-award"></i> Certifications & Credentials</h4>
-                        <div class="extracted-text whitespace-pre">{{ candidate.certifications }}</div>
+                {% if candidate.certifications and candidate.certifications != 'Not Available' %}
+                    <div class="extracted-section mb-3">
+                        <h4 class="extracted-heading"><i data-lucide="award" class="icon-xs text-amber"></i> Certifications & Credentials</h4>
+                        <div class="extracted-text-box">{{ candidate.certifications }}</div>
                     </div>
                 {% endif %}
 
-                <!-- Raw Text Accordion -->
-                <details class="raw-text-details">
+                <!-- Collapsible Raw Extracted Text -->
+                <details class="raw-text-details mt-3">
                     <summary class="raw-text-summary">
-                        <span><i class="fa-solid fa-terminal"></i> View Full Raw Extracted Text</span>
-                        <i class="fa-solid fa-chevron-down summary-chevron"></i>
+                        <span class="flex items-center gap-2">
+                            <i data-lucide="terminal" class="icon-xs text-muted"></i>
+                            <span class="font-medium text-xs">View Full Raw Extracted Resume Text</span>
+                        </span>
+                        <i data-lucide="chevron-down" class="icon-xs summary-arrow"></i>
                     </summary>
-                    <pre class="raw-text-box">{{ candidate.raw_text }}</pre>
+                    <pre class="raw-text-viewer">{{ candidate.raw_text }}</pre>
                 </details>
             </div>
         </div>
+
     </div>
 
-    <!-- Right Column: 4-Factor Scoring Breakdown -->
-    <div class="candidate-side-col">
-        <div class="card score-breakdown-card">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fa-solid fa-chart-pie text-primary"></i> Score Breakdown</h3>
+    <!-- Right Column: 4-Factor Scoring Breakdown & Job Context -->
+    <div class="candidate-content-sidebar">
+        
+        <!-- 4-Factor Explainable Scoring Panel -->
+        <div class="card mb-4">
+            <div class="card-header border-b">
+                <h3 class="card-title text-base flex items-center gap-2">
+                    <i data-lucide="pie-chart" class="icon-sm text-primary"></i>
+                    4-Factor Scoring Breakdown
+                </h3>
             </div>
             <div class="card-body">
                 <!-- Factor 1: Skills (50%) -->
-                <div class="score-breakdown-item">
-                    <div class="breakdown-label-row">
-                        <span><strong>Skills Match</strong> (50% wt)</span>
-                        <span class="breakdown-val">{{ candidate.skill_score }}%</span>
+                <div class="score-factor-row">
+                    <div class="factor-header">
+                        <span class="factor-name font-semibold text-slate-800">Skills Match</span>
+                        <span class="factor-weight-pill">50% Weight</span>
+                        <span class="factor-score text-primary font-bold">{{ candidate.skill_score }}%</span>
                     </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill fill-primary" style="width: {{ candidate.skill_score }}%;"></div>
+                    <div class="score-meter-track mt-1.5">
+                        <div class="score-meter-fill bg-primary" style="width: {{ candidate.skill_score }}%;"></div>
                     </div>
-                    <span class="breakdown-subtext">{{ candidate.matched_skills|length }} of {{ (candidate.matched_skills|length + candidate.missing_skills|length) }} required skills</span>
+                    <div class="factor-meta text-xs text-muted mt-1">
+                        {{ candidate.matched_skills|length }} of {{ (candidate.matched_skills|length + candidate.missing_skills|length) }} required skills verified
+                    </div>
                 </div>
+
+                <div class="divider my-3"></div>
 
                 <!-- Factor 2: Experience (20%) -->
-                <div class="score-breakdown-item">
-                    <div class="breakdown-label-row">
-                        <span><strong>Experience Match</strong> (20% wt)</span>
-                        <span class="breakdown-val">{{ candidate.exp_score }}%</span>
+                <div class="score-factor-row">
+                    <div class="factor-header">
+                        <span class="factor-name font-semibold text-slate-800">Experience Match</span>
+                        <span class="factor-weight-pill">20% Weight</span>
+                        <span class="factor-score text-violet font-bold">{{ candidate.exp_score }}%</span>
                     </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill fill-purple" style="width: {{ candidate.exp_score }}%;"></div>
+                    <div class="score-meter-track mt-1.5">
+                        <div class="score-meter-fill bg-violet" style="width: {{ candidate.exp_score }}%;"></div>
                     </div>
-                    <span class="breakdown-subtext">{{ candidate.experience_years|format_exp }} yrs detected</span>
+                    <div class="factor-meta text-xs text-muted mt-1">
+                        {{ candidate.experience_years|format_exp }} yrs detected vs role target
+                    </div>
                 </div>
 
-                <!-- Factor 3: Education (10%) -->
-                <div class="score-breakdown-item">
-                    <div class="breakdown-label-row">
-                        <span><strong>Education Match</strong> (10% wt)</span>
-                        <span class="breakdown-val">{{ candidate.edu_score }}%</span>
+                <div class="divider my-3"></div>
+
+                <!-- Factor 3: TF-IDF Text Similarity (20%) -->
+                <div class="score-factor-row">
+                    <div class="factor-header">
+                        <span class="factor-name font-semibold text-slate-800">Semantic TF-IDF</span>
+                        <span class="factor-weight-pill">20% Weight</span>
+                        <span class="factor-score text-amber font-bold">{{ candidate.tfidf_score }}%</span>
                     </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill fill-emerald" style="width: {{ candidate.edu_score }}%;"></div>
+                    <div class="score-meter-track mt-1.5">
+                        <div class="score-meter-fill bg-amber" style="width: {{ candidate.tfidf_score }}%;"></div>
                     </div>
-                    <span class="breakdown-subtext">{{ candidate.education }}</span>
+                    <div class="factor-meta text-xs text-muted mt-1">
+                        Cosine similarity against Job Description vector
+                    </div>
                 </div>
 
-                <!-- Factor 4: TF-IDF Text Similarity (20%) -->
-                <div class="score-breakdown-item">
-                    <div class="breakdown-label-row">
-                        <span><strong>Semantic TF-IDF</strong> (20% wt)</span>
-                        <span class="breakdown-val">{{ candidate.tfidf_score }}%</span>
+                <div class="divider my-3"></div>
+
+                <!-- Factor 4: Education (10%) -->
+                <div class="score-factor-row">
+                    <div class="factor-header">
+                        <span class="factor-name font-semibold text-slate-800">Education Match</span>
+                        <span class="factor-weight-pill">10% Weight</span>
+                        <span class="factor-score text-emerald font-bold">{{ candidate.edu_score }}%</span>
                     </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill fill-amber" style="width: {{ candidate.tfidf_score }}%;"></div>
+                    <div class="score-meter-track mt-1.5">
+                        <div class="score-meter-fill bg-emerald" style="width: {{ candidate.edu_score }}%;"></div>
                     </div>
-                    <span class="breakdown-subtext">Cosine similarity against Job text</span>
+                    <div class="factor-meta text-xs text-muted mt-1">
+                        Extracted degree: {{ candidate.education }}
+                    </div>
                 </div>
 
-                <!-- Summary Total -->
-                <div class="final-score-summary">
-                    <span>Overall Weighted Score</span>
-                    <span class="final-score-big">{{ candidate.match_score }}%</span>
+                <div class="final-score-callout mt-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs uppercase font-semibold text-muted tracking-wide block">Overall Weighted Total</span>
+                            <span class="text-xs text-muted">0.5S + 0.2E + 0.2T + 0.1Ed</span>
+                        </div>
+                        <span class="final-score-badge font-mono font-bold text-lg {% if candidate.match_score >= 70 %}text-emerald{% elif candidate.match_score >= 45 %}text-amber{% else %}text-danger{% endif %}">
+                            {{ candidate.match_score }}%
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Target Job Context Card -->
-        <div class="card job-context-card">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fa-solid fa-briefcase text-muted"></i> Position Target</h3>
+        <div class="card mb-4">
+            <div class="card-header border-b">
+                <h3 class="card-title text-base flex items-center gap-2">
+                    <i data-lucide="briefcase" class="icon-sm text-muted"></i>
+                    Role Target Context
+                </h3>
             </div>
             <div class="card-body">
-                <h4 class="job-context-title">{{ job.job_title }}</h4>
-                <p class="job-context-desc">{{ job.job_description[:160] }}...</p>
-                <a href="{{ url_for('view_results', job_id=job.id) }}" class="btn btn-outline-secondary btn-sm btn-block mt-3">
-                    View Full Leaderboard
-                </a>
+                <h4 class="font-bold text-slate-800 text-sm mb-1">{{ job.job_title }}</h4>
+                <p class="text-xs text-slate-600 mb-3 leading-relaxed">{{ job.job_description[:180] }}...</p>
+                
+                <div class="flex flex-col gap-2">
+                    <a href="{{ url_for('view_results', job_id=job.id) }}" class="btn btn-secondary btn-sm justify-center">
+                        <i data-lucide="list-ordered" class="icon-xs"></i> View Full Leaderboard
+                    </a>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary btn-sm justify-center">
+                        <i data-lucide="plus" class="icon-xs"></i> Screen New Resumes
+                    </a>
+                </div>
             </div>
         </div>
+
     </div>
 </div>
+
+<script>
+function confirmDeleteCandidate(candId, candName) {
+    showConfirmModal(
+        'Delete Candidate Record',
+        `Are you sure you want to delete ${candName}? This action will permanently remove their match evaluation from this screening session.`,
+        () => {
+            fetch(`/api/delete-candidate/${candId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Failed to delete candidate.');
+            });
+        }
+    );
+}
+</script>
 {% endblock %}
